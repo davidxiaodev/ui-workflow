@@ -84,7 +84,8 @@ states, tables, navigation). Copy the numbers into design.md's UX rules. Ignore 
    Not checked in every review. Add `.ui-verify/runs/` to `.gitignore`.
 6. Functional checks: if the project has an e2e suite that drives its main journeys, put its command
    in the `functional` check. If it has none, or it skips the journeys this product depends on,
-   follow `functional-verify.md` to generate a `verify-<app>` skill and its journeys first.
+   follow `functional-verify.md`. A project with no user-facing journey yet leaves `functional` out
+   (step 5) and runs `functional-verify.md` when the first journey is built.
 7. Make sure `CLAUDE.md` exists (create it if not) and holds the line from step 5.2.
 8. If pages exist, generate their first screenshot baselines (`--update-snapshots`), show them to the
    user and commit them only when they agree and have asked for commits. If no page exists yet, the

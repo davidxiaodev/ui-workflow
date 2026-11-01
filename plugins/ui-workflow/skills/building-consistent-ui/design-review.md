@@ -86,13 +86,13 @@ Focal point: <page>: <element>; …
 ## Consistency
 - Group <group from ui-pages.json> at 390: <pages>: <same | differences, each listed above | only page in its group>
 
-Baselines updated: <none | page-width: what changed and why it was intended>
+Baselines updated: <copied from the brief>
 Not checked: <dark mode, real device, …>
 Verdict: <approved | changes required>
 ```
 
 Approve only when no Blocker and no Should-fix is open (`- [ ]`); deferred follow-ups may remain. Any
-`- [ ]` line, a `FAIL` line, or a verdict other than `approved` keeps the Stop gate closed.
+`- [ ]` line, a line starting with `FAIL`, or a verdict other than `approved` keeps the Stop gate closed.
 
 As the reviewer, list every finding you see in the current screenshots as open (`- [ ]`), except the
 deferred Should-fixes your brief names, which you record as `- [-]` follow-ups. Do not fix anything.

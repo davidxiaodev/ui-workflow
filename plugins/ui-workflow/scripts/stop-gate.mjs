@@ -40,7 +40,7 @@ if (!existsSync(lastRunPath)) {
   if (!existsSync(reviewPath)) problems.push(".ui-verify/review.md is missing.");
   else {
     if (statSync(reviewPath).mtimeMs < finished) problems.push(".ui-verify/review.md is older than the last run-verify.");
-    const open = readFileSync(reviewPath, "utf8").split("\n").filter((l) => /^\s*-\s*\[ \]/.test(l) || /\bFAIL\b/.test(l));
+    const open = readFileSync(reviewPath, "utf8").split("\n").filter((l) => /^\s*-\s*\[ \]/.test(l) || /^\s*(?:-\s*)?FAIL\b/.test(l));
     if (open.length) problems.push(`.ui-verify/review.md still has ${open.length} open or failing line(s).`);
     if (!/^Verdict:\s*approved\b/im.test(readFileSync(reviewPath, "utf8"))) problems.push('.ui-verify/review.md does not say "Verdict: approved".');
   }

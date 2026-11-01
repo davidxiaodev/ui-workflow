@@ -26,8 +26,8 @@
 4. Give the user the URLs. Screenshot each variant so they can compare without running the app:
    `npx playwright screenshot --full-page --viewport-size "390,900" "<url>?variant=A" .ui-verify/proto/A-390.png`,
    and again at `1280,900`.
-5. Waiting for the user's choice is not done work. The Stop gate reminds you once; end the turn by
-   saying the prototypes are unverified and you are waiting for their pick.
+5. Waiting for the user's choice is not done work. The Stop gate blocks your first attempt to stop;
+   end the turn by saying the prototypes are unverified and you are waiting for their pick.
 6. Recommend one variant and say why, so the user can just agree.
 7. After they choose: fold the winner into the real code properly (tests, states), add its structure
    to design.md's Page patterns, and record the choice and why. Keep the variants on a throwaway
