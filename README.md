@@ -7,8 +7,9 @@
 - **一份设计约定。** 每个项目有 `docs/design.md` 和一个 token 文件（CSS 变量）。所有页面都按它做；
   某个页面要"不一样"时，AI 会先说明代价并让你决定，而不是直接给那个页面另做一套风格。
 - **三个阶段。** 没有设计约定时走 `setup.md`（定方向、写约定、接检查）；改界面走 `build.md`
-  （需要时出 3 种结构不同的原型让你选）；最后走 `verify.md`（截图、可访问性、视觉检查、一致性评审）。
-- **收尾检查。** Stop 钩子：项目里改了界面文件，但 `run-verify` 没有通过、或截图评审没写，
+  （需要时出 3 种结构不同的原型让你选）；最后走 `verify.md`（截图、可访问性、视觉检查），再按 `design-review.md` 评审截图：
+  问题分严重程度，结论必须是 approved。
+- **收尾检查。** Stop 钩子：项目里改了界面文件，但 `run-verify` 没有通过、截图评审没写、或评审结论不是 approved，
   AI 就不能结束这一轮。
 
 ## 安装
@@ -47,6 +48,7 @@ baoyu-design 是可选的看图调色工具，只在项目仓库外用（它含�
 | --- | --- |
 | `plugins/ui-workflow/skills/building-consistent-ui/SKILL.md` | 入口：按项目状态分流、风格变更请求怎么回、红线 |
 | `.../setup.md`、`build.md`、`verify.md` | 三个阶段的步骤 |
+| `.../design-review.md` | 截图评审：七个角度、严重程度、结论（改写自 interface-design） |
 | `.../templates/` | `design.md` 模板、Playwright 截图+axe 测试、检查配置 |
 | `plugins/ui-workflow/scripts/check-raw-styles.mjs` | 找出写死的颜色、Tailwind 色板类、任意值 |
 | `plugins/ui-workflow/scripts/run-verify.mjs` | 跑项目的全部界面检查，按真实退出码记录结果 |

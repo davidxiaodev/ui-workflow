@@ -24,22 +24,10 @@ baseline once they agree. Then run `run-verify.mjs` in full.
 
 ## Review the screenshots
 
-Open the screenshots in the run folder and look at them. Then write `.ui-verify/review.md`:
-
-```markdown
-# Review <run folder name>
-- [x] <page> 390/768/1280: matches design.md <sections checked>
-- [x] Consistency, group <group>: <pages> side by side at 390: same header, spacing, parts
-- [ ] <anything still wrong, with the file to fix>
-Baselines updated: <none | page-width: what changed and why it was intended>
-Not checked: <dark mode, real device, …>
-```
-
-For consistency, put every page of the same `group` side by side at one width and ask: would a
-user think these come from the same app? Differences in content are fine; differences in type,
-spacing, colour roles or parts are findings.
-
-Any `- [ ]` or `FAIL` line keeps the Stop gate closed. Fix, rerun, rewrite the review.
+Open the screenshots in the run folder and review them with `design-review.md`. It ends by writing
+`.ui-verify/review.md` with findings, a consistency line per page group, and a verdict. The Stop gate
+stays closed until that file is newer than the run, has no open `- [ ]` line, and says
+`Verdict: approved`. Fix, rerun, review again.
 
 ## Baseline rules
 

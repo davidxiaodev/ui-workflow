@@ -20,7 +20,7 @@ Third-party design skills are tools this workflow calls; they never override the
 | No `docs/design.md` | `setup.md`, then come back |
 | Request: one page/module should look different from `docs/design.md` | "Style change requests" below |
 | Building or changing a screen | `build.md`, then `verify.md` |
-| Asked only to review or check UI | `verify.md` |
+| Asked only to review or check UI | `verify.md`, then `design-review.md` |
 
 ## Style change requests
 
@@ -58,11 +58,13 @@ A tool missing: say which, continue with this skill's own checks, never pretend 
 | "The user asked for it explicitly" | Answer with the three parts above; they choose |
 | "Only additive, it is scoped to one folder" | A second theme is a second product |
 | "Typecheck, lint and e2e pass" | That proves it runs, not how it looks |
+| "It renders and aligns, approve it" | Correct is not crafted; run `design-review.md` |
 | "The diffs are expected, update the snapshots" | `verify.md` baseline rules first |
 | "No time for screenshots" | Then report it as unverified, not done |
 | "I'll pick a fresh direction for this page" | The direction is locked in `docs/design.md` |
 
 ## Done means
 
-`run-verify.mjs` printed `pass`, `.ui-verify/review.md` is newer than that run and has no open line,
-and your final message lists what was checked and what could not be.
+`run-verify.mjs` printed `pass`, `.ui-verify/review.md` (written with `design-review.md`) is newer
+than that run, has no open line and says `Verdict: approved`, and your final message lists what
+was checked, the follow-ups, and what could not be checked.

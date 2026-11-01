@@ -11,5 +11,8 @@ Adapted text:
   https://github.com/cursor/plugins/tree/main/pstack
 - `skills/building-consistent-ui/build.md` adapts the UI branch of `prototype` from
   mattpocock/skills, MIT License, https://github.com/mattpocock/skills
+- `skills/building-consistent-ui/design-review.md` adapts the `design-review` command from
+  interface-design, MIT License, Copyright (c) 2026 Damola Akinleye,
+  https://github.com/Dammyjay93/interface-design
 
 Pinned commits are in `vendor.lock.json`.

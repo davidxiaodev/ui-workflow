@@ -70,6 +70,8 @@ states, tables, navigation). Copy the numbers into design.md's UX rules. Ignore 
    the example routes with real ones (empty list until a page exists), and add `@playwright/test` and
    `@axe-core/playwright`. No `playwright.config.ts` yet: create it with `npm init playwright@latest`. In `playwright.config.ts` set `webServer` to the
    app's dev command with `reuseExistingServer: true`, so the check starts the app itself.
+   Hide framework overlays in screenshots (Next.js: `devIndicators: false` in `next.config`), and keep
+   the test's viewport widths exactly 390, 768 and 1280.
 4. Screens must show the same data on every run: point them at seed data, or with no backend yet
    at a fixture module in the repo (`src/fixtures/<thing>.ts`). List any clock, random or live value
    under `mask` in `ui-pages.json`.
