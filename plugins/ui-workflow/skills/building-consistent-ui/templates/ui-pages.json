@@ -1,0 +1,4 @@
+[
+  { "name": "home", "path": "/", "group": "marketing" },
+  { "name": "list", "path": "/items", "group": "app-list", "mask": ["[data-testid=clock]"] }
+]

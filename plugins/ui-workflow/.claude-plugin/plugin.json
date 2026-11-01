@@ -1,0 +1,8 @@
+{
+  "name": "ui-workflow",
+  "version": "0.1.0",
+  "description": "One project, one style: a design contract (docs/design.md + tokens), structured prototyping, and UI checks the agent must pass before it stops.",
+  "author": { "name": "davidxiaodev" },
+  "license": "MIT",
+  "keywords": ["design-system", "ui", "verification", "playwright", "tokens", "consistency"]
+}

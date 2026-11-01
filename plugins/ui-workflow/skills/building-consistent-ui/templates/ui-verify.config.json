@@ -1,0 +1,9 @@
+{
+  "checks": [
+    { "name": "raw-styles", "run": "node scripts/ui/check-raw-styles.mjs <ui source dirs>" },
+    { "name": "types", "run": "<the project's typecheck command>" },
+    { "name": "functional", "run": "<the project's e2e command>", "timeoutMin": 30 },
+    { "name": "look", "run": "npx playwright test e2e/ui-look", "cwd": "<web app dir>", "timeoutMin": 30 },
+    { "name": "inspect", "run": "node <tasteInspect path> <url> --out \"$UI_VERIFY_RUN_DIR/inspect\" <--app for app screens>" }
+  ]
+}

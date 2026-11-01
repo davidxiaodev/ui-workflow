@@ -1,0 +1,11 @@
+{
+  "name": "ui-workflow",
+  "owner": { "name": "davidxiaodev" },
+  "plugins": [
+    {
+      "name": "ui-workflow",
+      "source": "./plugins/ui-workflow",
+      "description": "One project, one style: design contract, prototyping and enforced UI verification."
+    }
+  ]
+}
