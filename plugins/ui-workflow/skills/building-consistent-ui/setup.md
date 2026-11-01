@@ -82,13 +82,16 @@ states, tables, navigation). Copy the numbers into design.md's UX rules. Ignore 
    (`npx start-server-and-test dev <url> "node <tasteInspect> <url> --out \"$UI_VERIFY_RUN_DIR/inspect\""`).
    No taste-skill: leave `inspect` out and write "inspect not run: taste-skill missing" under
    Not checked in every review. Add `.ui-verify/runs/` to `.gitignore`.
-6. Make sure `CLAUDE.md` exists (create it if not) and holds the line from step 5.2.
-7. If pages exist, generate their first screenshot baselines (`--update-snapshots`), show them to the
+6. Functional checks: if the project has an e2e suite that drives its main journeys, put its command
+   in the `functional` check. If it has none, or it skips the journeys this product depends on,
+   follow `functional-verify.md` to generate a `verify-<app>` skill and its journeys first.
+7. Make sure `CLAUDE.md` exists (create it if not) and holds the line from step 5.2.
+8. If pages exist, generate their first screenshot baselines (`--update-snapshots`), show them to the
    user and commit them only when they agree and have asked for commits. If no page exists yet, the
    first page you build creates its baseline the same way (verify.md, New pages). Write the OS or
    container used in design.md's Baselines line; Playwright adds it to snapshot names
    (`-linux`, `-darwin`), so later updates must run there too.
-8. If pages exist, run `node <plugin>/scripts/run-verify.mjs` and follow `verify.md` once end to
+9. If pages exist, run `node <plugin>/scripts/run-verify.mjs` and follow `verify.md` once end to
    end. If none exist, the first build does this.
 
 ## Asking a user who is not a designer

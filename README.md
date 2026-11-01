@@ -48,7 +48,8 @@ baoyu-design 是可选的看图调色工具，只在项目仓库外用（它含�
 | --- | --- |
 | `plugins/ui-workflow/skills/building-consistent-ui/SKILL.md` | 入口：按项目状态分流、风格变更请求怎么回、红线 |
 | `.../setup.md`、`build.md`、`verify.md` | 三个阶段的步骤 |
-| `.../design-review.md` | 截图评审：七个角度、严重程度、结论（改写自 interface-design） |
+| `.../design-review.md` | 截图评审：七个角度、严重程度、结论（改写自 interface-design），由一个没参与实现的子代理执行 |
+| `.../functional-verify.md` | 项目没有功能测试时，生成 `verify-<app>` skill 和用户路径测试（改写自 pstack） |
 | `.../templates/` | `design.md` 模板、Playwright 截图+axe 测试、检查配置 |
 | `plugins/ui-workflow/scripts/check-raw-styles.mjs` | 找出写死的颜色、Tailwind 色板类、任意值 |
 | `plugins/ui-workflow/scripts/run-verify.mjs` | 跑项目的全部界面检查，按真实退出码记录结果 |

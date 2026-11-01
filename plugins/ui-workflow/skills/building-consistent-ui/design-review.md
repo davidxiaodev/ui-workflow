@@ -73,13 +73,14 @@ high-conviction findings beat a long list.
 
 ```markdown
 # Review <runDir from last-run.json>
+Reviewer: <model, or "same agent, no independent review available">
 Scope: <pages and widths>
 Focal point: <page>: <element>; …
 
 ## Findings
 - [ ] Blocker · <page> <width> · <lens>: <what defaulted> → <why it costs the user> → <the decision that fixes it>
-- [x] Should-fix · … (fixed in this change)
-- [-] Should-fix · … (follow-up, not fixed: <why>)
+- [ ] Should-fix · …
+- [-] Should-fix · … (follow-up, deferred: <reason from the brief>)
 - Note · …
 
 ## Consistency
@@ -90,14 +91,17 @@ Not checked: <dark mode, real device, …>
 Verdict: <approved | changes required>
 ```
 
-Approve only when no Blocker is open and every Should-fix is fixed or listed as a follow-up. Any
+Approve only when no Blocker and no Should-fix is open (`- [ ]`); deferred follow-ups may remain. Any
 `- [ ]` line, a `FAIL` line, or a verdict other than `approved` keeps the Stop gate closed.
 
-## 6. Fix from the decision
+As the reviewer, list every finding you see in the current screenshots as open (`- [ ]`), except the
+deferred Should-fixes your brief names, which you record as `- [-]` follow-ups. Do not fix anything.
+
+## 6. For the builder: fix from the decision
 
 Fix Blockers first. Rebuild the flagged part from the decision (re-derive the focal point or the type
 tiers from design.md) rather than nudging values until the screenshot looks less wrong. Rerun
-`run-verify.mjs`, look again, and rewrite the review. A fix that needs a design.md change goes to the
+`run-verify.mjs` and send a new reviewer (verify.md). A fix that needs a design.md change goes to the
 user as a proposal.
 
 Adapted from interface-design's `design-review` (Damola Akinleye, MIT).

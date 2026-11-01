@@ -38,7 +38,8 @@
       "commit": "4dd1d05818d19792e7cd6e818f1667f95f7e1dbe",
       "license": "MIT, Copyright (c) 2026 Lauren Tan",
       "into": [
-        "skills/building-consistent-ui/verify.md"
+        "skills/building-consistent-ui/verify.md",
+        "skills/building-consistent-ui/functional-verify.md"
       ]
     },
     "mattpocock-skills": {
