@@ -19,7 +19,7 @@ commit, and say which screens the change touches.
 | --- | --- | --- |
 | Page ground | `--background` / `--foreground` | |
 | Surface | `--card` / `--card-foreground` | |
-| Action | `--primary` / `--primary-foreground` | one primary action per view |
+| Action | `--primary` / `--primary-foreground` | the one main action of a view; in a repeated item (a product card) its own main action |
 | Quiet | `--muted` / `--muted-foreground` | secondary text, never body copy under 4.5:1 |
 | Edges | `--border`, `--input`, `--ring` | |
 | Status | `--destructive`, `--success` (add it if missing) | meaning only, never decoration |
