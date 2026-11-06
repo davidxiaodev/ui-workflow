@@ -57,7 +57,7 @@ cannot loop forever; ending that way means your final message must say the UI is
 ## Evidence pack and merge tier
 
 People read evidence instead of code. After the review, run
-`node <plugin>/scripts/make-evidence.mjs --pr`. It writes `<runDir>/evidence.md`: the merge tier,
+`node <plugin>/scripts/make-evidence.mjs` (add `--pr` when you will open a pull request). It writes `<runDir>/evidence.md`: the merge tier,
 the checks, before/after screenshots per page and width, recordings, the verdict, open and deferred
 findings and what was not checked. The Stop gate requires it and requires it newer than the review.
 
@@ -70,8 +70,13 @@ findings and what was not checked. The Stop gate requires it and requires it new
 
 The tier is computed, never chosen. When you open a pull request, put the `--pr` output at the top
 of its body, and attach the screenshots and recordings (or link the CI artifact of the run folder).
-Your final message gives the evidence.md path and the tier in its first line. The user may later
-decide that a tier needs less attention; that is their call, recorded in design.md, not yours.
+Your final message is at least two lines, however short the user asks for: first the evidence.md
+path and the tier, then the deferred follow-ups and what was not checked (or "none").
+
+The user may decide that some tier-2 changes need less attention. That is their call, written by
+them or with their approval in design.md's Merge policy, in its own commit. It changes who must look
+from the next change on; it never changes the computed tier, and never applies to the change in
+progress.
 
 ## Baseline rules
 
@@ -84,6 +89,8 @@ A screenshot diff is a question, not an error to silence.
    you commit, they go in a commit of their own.
 4. Never loosen a threshold, add a mask, add an `--allow` id or edit a test to get a pass. Those
    change the contract; propose them to the user.
-5. The final message names every updated baseline, so the user can look before merging.
+5. After updating baselines, rerun `run-verify.mjs` in full; the review and the evidence pack always
+   come after the last run.
+6. The final message names every updated baseline, so the user can look before merging.
 
 Adapted from pstack (Lauren Tan, MIT): create-verification-skill and the visual-parity playbook.

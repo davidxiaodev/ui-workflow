@@ -67,8 +67,10 @@ Numbers, not adjectives. From ui-ux-pro-max `--domain ux` and our own decisions.
 
 ## Merge policy
 
-- Merge tiers as in the skill's verify.md. Changes the owner has made: <none | e.g. tier 2 for parts
-  under src/flows/about needs only a glance, since <date>>.
+- Merge tiers as in the skill's verify.md. The tier itself is always computed; this section only
+  changes who must look, from the commit that adds a line here on.
+- Owner's changes: <none | e.g. "tier 2 caused only by src/flows/about needs a glance, not every
+  pair (since <date>)">.
 
 ## Baselines
 
