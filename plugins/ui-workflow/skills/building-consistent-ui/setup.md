@@ -71,12 +71,17 @@ states, tables, navigation). Copy the numbers into design.md's UX rules. Ignore 
    `@axe-core/playwright`. No `playwright.config.ts` yet: create it with `npm init playwright@latest`. In `playwright.config.ts` set `webServer` to the
    app's dev command with `reuseExistingServer: true`, so the check starts the app itself.
    Hide framework overlays in screenshots (Next.js: `devIndicators: false` in `next.config`), and keep
-   the test's viewport widths exactly 390, 768 and 1280.
+   the test's viewport widths exactly 390, 768 and 1280. Record evidence for people: in `use` set
+   `video: "on"` and `trace: "retain-on-failure"`, and set
+   `outputDir: process.env.UI_VERIFY_RUN_DIR ? join(process.env.UI_VERIFY_RUN_DIR, "playwright") : "test-results"`.
 4. Screens must show the same data on every run: point them at seed data, or with no backend yet
    at a fixture module in the repo (`src/fixtures/<thing>.ts`). List any clock, random or live value
    under `mask` in `ui-pages.json`.
-5. Copy `<skill>/templates/ui-verify.config.json` to `.ui-verify/config.json`. Fill each check with
-   the project's real command. A check with no command yet (a new repo has no e2e) is left out, not
+5. Copy `<skill>/templates/ui-verify.config.json` to `.ui-verify/config.json`. Set `tokens` to the
+   token file and `docs/design.md`, and `shared` to the folders of parts many pages use; the merge
+   tier reads both. Fill each check with the project's real command; drop the optional `properties`
+   and `audit` lines unless the project wants them (property tests suit pure helpers such as money or
+   date formatting). A check with no command yet (a new repo has no e2e) is left out, not
    invented; add it when the project gets one. Add one `inspect` check per page group, each on one
    representative URL, with the dev server started by the same command
    (`npx start-server-and-test dev <url> "node <tasteInspect> <url> --out \"$UI_VERIFY_RUN_DIR/inspect\""`).

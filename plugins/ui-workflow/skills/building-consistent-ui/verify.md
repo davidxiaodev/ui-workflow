@@ -54,6 +54,25 @@ The Stop gate blocks your first attempt to stop until `.ui-verify/review.md` is 
 has no open `- [ ]` line, and says `Verdict: approved`. It lets the second attempt through so a turn
 cannot loop forever; ending that way means your final message must say the UI is not verified.
 
+## Evidence pack and merge tier
+
+People read evidence instead of code. After the review, run
+`node <plugin>/scripts/make-evidence.mjs --pr`. It writes `<runDir>/evidence.md`: the merge tier,
+the checks, before/after screenshots per page and width, recordings, the verdict, open and deferred
+findings and what was not checked. The Stop gate requires it and requires it newer than the review.
+
+| Tier | When | Who must look |
+| --- | --- | --- |
+| 1 | checks pass, review approved, no baseline, shared part or design change | a glance at evidence.md is enough to merge |
+| 2 | baselines updated or a shared part changed (`shared` in config) | the user looks at every before/after pair |
+| 3 | `docs/design.md` or a token file changed (`tokens` in config) | the user confirms the design change before merge |
+| not ready | checks failed or review not approved | nobody merges |
+
+The tier is computed, never chosen. When you open a pull request, put the `--pr` output at the top
+of its body, and attach the screenshots and recordings (or link the CI artifact of the run folder).
+Your final message gives the evidence.md path and the tier in its first line. The user may later
+decide that a tier needs less attention; that is their call, recorded in design.md, not yours.
+
 ## Baseline rules
 
 A screenshot diff is a question, not an error to silence.

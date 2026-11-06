@@ -63,10 +63,12 @@ A tool missing: say which, continue with this skill's own checks, never pretend 
 | "I'll review my own screenshots, it's faster" | The builder grades too kindly; dispatch a fresh reviewer |
 | "The diffs are expected, update the snapshots" | `verify.md` baseline rules first |
 | "No time for screenshots" | Then report it as unverified, not done |
+| "Tier 2, but the diffs are tiny, call it tier 1" | The tier is computed by make-evidence; never edit it |
 | "I'll pick a fresh direction for this page" | The direction is locked in `docs/design.md` |
 
 ## Done means
 
 `run-verify.mjs` printed `pass`, `.ui-verify/review.md` (written with `design-review.md`) is newer
-than that run, has no open line and says `Verdict: approved`, and your final message lists what
-was checked, the follow-ups, and what could not be checked.
+than that run, has no open line and says `Verdict: approved`, `make-evidence.mjs` wrote the evidence
+pack after it, and your final message starts with the evidence path and the merge tier, then lists
+the follow-ups and what could not be checked.

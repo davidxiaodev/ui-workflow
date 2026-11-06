@@ -39,7 +39,8 @@ precondition, the journey fails and the reason goes in Gotchas. Never weaken a j
 ## 4. Script the journeys
 
 Write each mapped journey as a runnable test (`e2e/journeys/<feature>.e2e.ts` for web, a Maestro flow
-for phone) and add one `functional` check to `.ui-verify/config.json` that runs them.
+for phone; wrap a phone journey in `startRecording` / `stopRecording` and save the recording under
+`$UI_VERIFY_RUN_DIR`, passed in with `-e`, so people can watch it) and add one `functional` check to `.ui-verify/config.json` that runs them.
 
 ## 5. Prove it before handing over
 

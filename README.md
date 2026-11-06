@@ -9,6 +9,8 @@
 - **三个阶段。** 没有设计约定时走 `setup.md`（定方向、写约定、接检查）；改界面走 `build.md`
   （需要时出 3 种结构不同的原型让你选）；最后走 `verify.md`（截图、可访问性、视觉检查），再按 `design-review.md` 评审截图：
   问题分严重程度，结论必须是 approved。
+- **证据包和合并分档。** 每次验证后生成 `evidence.md`：改动前后的截图（390/1280 并排）、操作录屏、评审结论，
+  以及按改动自动算出的合并分档（1 扫一眼即可合并；2 要看前后对比；3 改了设计约定，要你确认）。
 - **收尾检查。** Stop 钩子：项目里改了界面文件，但 `run-verify` 没有通过、截图评审没写、或评审结论不是 approved，
   第一次结束会被拦下；仍未通过就结束时，AI 必须写明"界面未验证"（钩子只拦一次，避免无限循环）。
 
@@ -53,6 +55,7 @@ baoyu-design 是可选的看图调色工具，只在项目仓库外用（它含�
 | `.../templates/` | `design.md` 模板、Playwright 截图+axe 测试、检查配置 |
 | `plugins/ui-workflow/scripts/check-raw-styles.mjs` | 找出写死的颜色、Tailwind 色板类、任意值 |
 | `plugins/ui-workflow/scripts/run-verify.mjs` | 跑项目的全部界面检查，按真实退出码记录结果 |
+| `plugins/ui-workflow/scripts/make-evidence.mjs` | 生成给人看的证据包：合并分档、前后对比截图、录屏、评审结论；`--pr` 输出 PR 描述 |
 | `plugins/ui-workflow/scripts/stop-gate.mjs` | Stop 钩子 |
 | `plugins/ui-workflow/scripts/find-tools.mjs` | 找到已安装的 taste-skill、ui-ux-pro-max、baoyu-design |
 

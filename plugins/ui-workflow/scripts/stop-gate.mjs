@@ -44,13 +44,16 @@ if (!existsSync(lastRunPath)) {
     if (open.length) problems.push(`.ui-verify/review.md still has ${open.length} open or failing line(s).`);
     if (!/^Verdict:\s*approved\b/im.test(readFileSync(reviewPath, "utf8"))) problems.push('.ui-verify/review.md does not say "Verdict: approved".');
   }
+  const evidencePath = last.runDir ? join(last.runDir, "evidence.md") : "";
+  if (!evidencePath || !existsSync(evidencePath)) problems.push("the evidence pack is missing: run make-evidence.mjs after the review.");
+  else if (existsSync(reviewPath) && statSync(evidencePath).mtimeMs < statSync(reviewPath).mtimeMs) problems.push("the evidence pack is older than the review: run make-evidence.mjs again.");
 }
 
 if (problems.length === 0) process.exit(0);
 const reason = [
   `UI files changed (${changed.slice(0, 5).join(", ")}${changed.length > 5 ? ", …" : ""}) but the UI is not verified:`,
   ...problems.map((p) => `- ${p}`),
-  "Follow the building-consistent-ui skill's verify.md: run run-verify.mjs, review the screenshots with design-review.md, write .ui-verify/review.md.",
+  "Follow the building-consistent-ui skill's verify.md: run run-verify.mjs, review the screenshots with design-review.md, write .ui-verify/review.md, then run make-evidence.mjs.",
   "If you cannot verify (no browser, server will not start), say so plainly to the user instead of claiming the work is done.",
 ].join("\n");
 process.stdout.write(JSON.stringify({ decision: "block", reason }) + "\n");

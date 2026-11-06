@@ -65,6 +65,11 @@ Numbers, not adjectives. From ui-ux-pro-max `--domain ux` and our own decisions.
 - Widths checked: 390, 768, 1280. No sideways scroll.
 - <forms, empty/loading/error states, motion, reduced motion>
 
+## Merge policy
+
+- Merge tiers as in the skill's verify.md. Changes the owner has made: <none | e.g. tier 2 for parts
+  under src/flows/about needs only a glance, since <date>>.
+
 ## Baselines
 
 - Screenshots are made on: <OS or container image>. Update them only there.
