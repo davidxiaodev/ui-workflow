@@ -1,11 +1,13 @@
 {
   "name": "ui-workflow",
-  "owner": { "name": "davidxiaodev" },
+  "owner": {
+    "name": "davidxiaodev"
+  },
   "plugins": [
     {
       "name": "ui-workflow",
-      "source": "./plugins/ui-workflow",
-      "description": "One project, one style: design contract, prototyping and enforced UI verification."
+      "source": "./plugins/workflow",
+      "description": "Acceptance first, one design and one backend contract, enforced verification per lane (ui, api) with independent review and evidence."
     }
   ]
 }

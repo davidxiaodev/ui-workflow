@@ -73,24 +73,27 @@ states, tables, navigation). Copy the numbers into design.md's UX rules. Ignore 
    Hide framework overlays in screenshots (Next.js: `devIndicators: false` in `next.config`), and keep
    the test's viewport widths exactly 390, 768 and 1280. Record evidence for people: in `use` set
    `video: "on"` and `trace: "retain-on-failure"`, and set
-   `outputDir: process.env.UI_VERIFY_RUN_DIR ? join(process.env.UI_VERIFY_RUN_DIR, "playwright") : "test-results"`.
+   `outputDir: process.env.VERIFY_RUN_DIR ? join(process.env.VERIFY_RUN_DIR, "playwright") : "test-results"`.
 4. Screens must show the same data on every run: point them at seed data, or with no backend yet
    at a fixture module in the repo (`src/fixtures/<thing>.ts`). List any clock, random or live value
    under `mask` in `ui-pages.json`.
-5. Copy `<skill>/templates/ui-verify.config.json` to `.ui-verify/config.json`. Set `tokens` to the
-   token file and `docs/design.md`, and `shared` to the folders of parts many pages use; the merge
-   tier reads both. Fill each check with the project's real command; drop the optional `properties`
-   and `audit` lines unless the project wants them (property tests suit pure helpers such as money or
-   date formatting). A check with no command yet (a new repo has no e2e) is left out, not
+5. Copy `<plugin>/shared/verify.config.json` to `.verify/config.json` (or, when it exists because the
+   api lane is set up, add its `ui` lane). Delete the `api` lane until the backend is set up with the
+   building-reliable-backend skill. Set the ui lane's `files` to the web app's UI source, `tokens` to
+   the token file (`docs/design.md` is always included), and `shared` to the folders of parts many
+   pages use; the merge tier reads both. Fill each check with the project's real command. Optional
+   checks the project may want: property tests for pure helpers such as money or date formatting, and
+   `{ "name": "negative", "negative": { "test": "<unit test command>" } }` when the UI has logic with
+   unit tests. A check with no command yet (a new repo has no e2e) is left out, not
    invented; add it when the project gets one. Add one `inspect` check per page group, each on one
    representative URL, with the dev server started by the same command
-   (`npx start-server-and-test dev <url> "node <tasteInspect> <url> --out \"$UI_VERIFY_RUN_DIR/inspect\""`).
+   (`npx start-server-and-test dev <url> "node <tasteInspect> <url> --out \"$VERIFY_RUN_DIR/inspect\""`).
    No taste-skill: leave `inspect` out and write "inspect not run: taste-skill missing" under
-   Not checked in every review. Add `.ui-verify/runs/` to `.gitignore`.
+   Not checked in every review. Add `.verify/*` and `!.verify/config.json` to `.gitignore`.
 6. Functional checks: if the project has an e2e suite that drives its main journeys, put its command
    in the `functional` check. If it has none, or it skips the journeys this product depends on,
-   follow `functional-verify.md`. A project with no user-facing journey yet leaves `functional` out
-   (step 5) and runs `functional-verify.md` when the first journey is built.
+   follow `<plugin>/shared/ctl.md`. A project with no user-facing journey yet leaves `functional` out
+   (step 5) and follows `ctl.md` when the first journey is built.
 7. Make sure `CLAUDE.md` exists (create it if not) and holds the line from step 5.2.
 8. If pages exist, generate their first screenshot baselines (`--update-snapshots`), show them to the
    user and commit them only when they agree and have asked for commits. If no page exists yet, the

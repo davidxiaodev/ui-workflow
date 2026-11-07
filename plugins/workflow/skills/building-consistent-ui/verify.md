@@ -2,8 +2,9 @@
 
 ## Run the checks
 
-`node <plugin>/scripts/run-verify.mjs` runs every check in `.ui-verify/config.json` and records the
-result from real exit codes. Logs and screenshots land in the printed run folder.
+`node <plugin>/scripts/run-verify.mjs --lane ui` runs the ui lane's checks in `.verify/config.json`
+(without `--lane`, every lane) and records the result from real exit codes. Logs and screenshots land
+in the printed run folder. When the change also touched the api lane, both lanes must pass.
 
 | Check | Passes when |
 | --- | --- |
@@ -29,11 +30,13 @@ when one is available) with exactly this brief, and nothing about how the change
 
 ```text
 Review UI screenshots. Follow <skill>/design-review.md exactly.
-Read: docs/design.md, .ui-verify/last-run.json (runDir), <web app>/e2e/ui-look/ui-pages.json.
+Read: docs/design.md, .verify/acceptance.md, .verify/last-run.json (lanes.ui.runDir),
+<web app>/e2e/ui-look/ui-pages.json.
+The user asked for: <the user's request, in their words>.
 Scope: <pages and widths the change touched, plus pages sharing a changed part>.
 Deferred Should-fixes (record as "- [-]" follow-ups if still present): <list with reasons, or none>.
 Baselines updated in this change (copy into the review): <page-width: what and why, or none>.
-Write .ui-verify/review.md as design-review.md step 5 shows, with "Reviewer: <your model>" under
+Write .verify/review-ui.md as design-review.md step 5 shows, with "Reviewer: <your model>" under
 the title. Do not edit any other file. Reply with the verdict and the Blocker lines.
 ```
 
@@ -50,8 +53,8 @@ Then:
 5. No subagent tool here: review it yourself with `design-review.md` and write
    "Reviewer: same agent, no independent review available" under the title, and tell the user.
 
-The Stop gate blocks your first attempt to stop until `.ui-verify/review.md` is newer than the run,
-has no open `- [ ]` line, and says `Verdict: approved`. It lets the second attempt through so a turn
+The Stop gate blocks your first attempt to stop until `.verify/review-ui.md` is newer than the run,
+has no open `- [ ]` line, accounts for every acceptance id, and says `Verdict: approved`. It lets the second attempt through so a turn
 cannot loop forever; ending that way means your final message must say the UI is not verified.
 
 ## Evidence pack and merge tier
@@ -63,10 +66,10 @@ findings and what was not checked. The Stop gate requires it and requires it new
 
 | Tier | When | Who must look |
 | --- | --- | --- |
-| 1 | checks pass, review approved, no baseline, shared part or design change | a glance at evidence.md is enough to merge |
-| 2 | baselines updated or a shared part changed (`shared` in config) | the user looks at every before/after pair |
-| 3 | `docs/design.md` or a token file changed (`tokens` in config) | the user confirms the design change before merge |
-| not ready | checks failed or review not approved | nobody merges |
+| 1 | checks pass, review approved, every criterion met, nothing below | a glance at evidence.md is enough to merge |
+| 2 | baselines updated, a shared part changed (`shared` in config), or a criterion "not checked" | the user looks at every before/after pair and the unchecked criteria |
+| 3 | `docs/design.md` or a token file changed (`tokens` in config), or an api contract or migration | the user confirms the contract change before merge |
+| not ready | checks failed, review not approved, a criterion not met or not reviewed | nobody merges |
 
 The tier is computed, never chosen. When you open a pull request, put the `--pr` output at the top
 of its body, and attach the screenshots and recordings (or link the CI artifact of the run folder).

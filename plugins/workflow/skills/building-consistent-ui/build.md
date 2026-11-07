@@ -1,5 +1,9 @@
 # Build: changing a screen
 
+0. No `.verify/acceptance.md` for this change yet: write it with `<plugin>/shared/acceptance.md`,
+   going through the UI adverse cases (invalid input, keyboard, slow and failed requests, double
+   submit, 390px, no permission). Each criterion names its proof: a page and state in
+   `ui-pages.json`, a journey, or a test.
 1. Read `docs/design.md` and the token file it names. Note the page kind of each screen you touch.
 2. List who else renders every shared part you will change (grep the imports). Name those screens
    in your reply; a change to a shared part lands on all of them.
@@ -24,7 +28,7 @@
    contract's colours, type and parts. Variants that differ only in colour are one variant.
 3. Add a small fixed switcher bar (arrows plus label, keyboard left/right, hidden in production).
 4. Give the user the URLs. Screenshot each variant so they can compare without running the app:
-   `npx playwright screenshot --full-page --viewport-size "390,900" "<url>?variant=A" .ui-verify/proto/A-390.png`,
+   `npx playwright screenshot --full-page --viewport-size "390,900" "<url>?variant=A" .verify/proto/A-390.png`,
    and again at `1280,900`.
 5. Waiting for the user's choice is not done work. The Stop gate blocks your first attempt to stop;
    end the turn by saying the prototypes are unverified and you are waiting for their pick.

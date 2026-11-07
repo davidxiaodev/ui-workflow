@@ -1,0 +1,21 @@
+{
+  "name": "ui-workflow",
+  "version": "0.2.0",
+  "description": "Front-end and back-end changes you can trust: acceptance criteria first, a design contract and a backend contract, checks per lane (ui, api) including a negative check, independent review, an evidence pack with a computed merge tier, and a Stop gate.",
+  "author": {
+    "name": "davidxiaodev"
+  },
+  "license": "MIT",
+  "keywords": [
+    "design-system",
+    "ui",
+    "backend",
+    "api",
+    "verification",
+    "acceptance",
+    "code-review",
+    "playwright",
+    "tokens",
+    "migrations"
+  ]
+}

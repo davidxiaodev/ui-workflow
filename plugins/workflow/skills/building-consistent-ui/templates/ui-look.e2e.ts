@@ -12,7 +12,7 @@ interface UiPage {
 
 const pages: UiPage[] = JSON.parse(readFileSync(join(process.cwd(), "e2e", "ui-look", "ui-pages.json"), "utf8"));
 const widths = [390, 768, 1280];
-const evidenceDir = process.env.UI_VERIFY_RUN_DIR ?? "test-results/ui-look";
+const evidenceDir = process.env.VERIFY_RUN_DIR ?? process.env.UI_VERIFY_RUN_DIR ?? "test-results/ui-look";
 
 for (const uiPage of pages) {
   for (const width of widths) {

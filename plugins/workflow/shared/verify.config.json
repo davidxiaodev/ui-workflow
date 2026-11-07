@@ -1,0 +1,34 @@
+{
+  "tests": ["**/test/**", "**/tests/**", "**/__tests__/**", "**/e2e/**", "**/journeys/**", "**/*.{test,spec,e2e}.*", "**/*_test.*", "**/test_*.py", "**/*-snapshots/**"],
+  "lanes": {
+    "ui": {
+      "files": ["<web app dir>/**/*.{tsx,jsx,vue,svelte,html,css,scss}"],
+      "tokens": ["<token CSS file>"],
+      "shared": ["<shared component folders, e.g. packages/ui, src/flows>"],
+      "checks": [
+        { "name": "raw-styles", "run": "node scripts/ui/check-raw-styles.mjs <ui source dirs>" },
+        { "name": "types", "run": "<the project's typecheck command>" },
+        { "name": "functional", "run": "<the project's e2e command, or ctl reset/start + the journeys + ctl stop>", "timeoutMin": 30 },
+        { "name": "look", "run": "npx playwright test e2e/ui-look", "cwd": "<web app dir>", "timeoutMin": 30 },
+        { "name": "inspect", "run": "node <tasteInspect path> <url> --out \"$VERIFY_RUN_DIR/inspect\" <--app for app screens>" }
+      ]
+    },
+    "api": {
+      "files": ["<api dir>/**", "<migrations dir>/**", "<contract file, e.g. openapi.yaml>"],
+      "contract": ["<contract file, e.g. openapi.yaml>"],
+      "migrations": ["<migrations dir>/**"],
+      "shared": ["<modules many endpoints use, e.g. src/auth, src/db>"],
+      "checks": [
+        { "name": "types", "run": "<typecheck or compile>" },
+        { "name": "lint", "run": "<the project's linter>" },
+        { "name": "unit", "run": "<unit tests>" },
+        { "name": "integration", "run": "<tests against a real database, e.g. docker compose up -d db && pnpm test:int>", "timeoutMin": 30 },
+        { "name": "negative", "negative": { "test": "<the command that runs this lane's unit and integration tests>" } },
+        { "name": "contract", "run": "<oasdiff breaking <base spec> <spec> --fail-on ERR, or the stack's schema check>" },
+        { "name": "migrations", "run": "<on a fresh database: migrate up, down to the base, up again>", "timeoutMin": 15 },
+        { "name": "functional", "run": "<ctl reset && ctl start && api journeys; ctl stop>", "timeoutMin": 30 },
+        { "name": "security", "run": "<optional: semgrep --config auto --error <api dir>; gitleaks detect; osv-scanner -r .>" }
+      ]
+    }
+  }
+}
