@@ -6,11 +6,16 @@ it look like the rest of this product?" Review the screenshots from the last run
 
 ## 1. Scope and intent
 
+- Acceptance: read `.verify/acceptance.md` and the user's request from your brief. Every criterion
+  tagged for the UI (or for both lanes) is yours to mark in step 5, from a screenshot, a recording, a
+  journey's log, or by driving the page yourself (`scripts/ctl screenshot`, Playwright). A criterion
+  the evidence does not show is "not checked", never "met". A wrong "not applicable" is a finding.
+
 - Under review: the pages and widths this change touched, plus every page sharing a changed part.
 - Intent: read `docs/design.md` (direction, page patterns, what may vary). You judge against the
   product's own decisions, not a generic ideal. A dense back-office table is not failing for being dense.
 
-- Evidence: the run folder named in `.ui-verify/last-run.json` (`runDir`). Approval needs a 390 and
+- Evidence: the run folder named in `.verify/last-run.json` (`lanes.ui.runDir`). Approval needs a 390 and
   a 1280 screenshot of every page in scope. Check each image's real pixel width first: a file whose
   width differs from its name, or a framework overlay in the shot, means the capture setup is wrong;
   fix it (setup.md, step 6.3) and rerun before judging layout.
@@ -69,13 +74,18 @@ Drop false positives:
 If you cannot say how a finding costs the user or makes the screen look generated, it is taste. A few
 high-conviction findings beat a long list.
 
-## 5. Write `.ui-verify/review.md`
+## 5. Write `.verify/review-ui.md`
 
 ```markdown
 # Review <runDir from last-run.json>
 Reviewer: <model, or "same agent, no independent review available">
 Scope: <pages and widths>
 Focal point: <page>: <element>; …
+
+## Acceptance
+- [x] A1 met · <evidence: screenshot, recording, journey log>
+- [ ] A2 not met · <what you saw>
+- [-] A3 not checked · <why>
 
 ## Findings
 - [ ] Blocker · <page> <width> · <lens>: <what defaulted> → <why it costs the user> → <the decision that fixes it>
@@ -91,7 +101,8 @@ Not checked: <dark mode, real device, …>
 Verdict: <approved | changes required>
 ```
 
-Approve only when no Blocker and no Should-fix is open (`- [ ]`); deferred follow-ups may remain. Any
+Approve only when no Blocker, Should-fix or acceptance criterion is open (`- [ ]`) and every
+acceptance id appears under `## Acceptance`; deferred follow-ups may remain. Any
 `- [ ]` line, a line starting with `FAIL`, or a verdict other than `approved` keeps the Stop gate closed.
 
 As the reviewer, list every finding you see in the current screenshots as open (`- [ ]`), except the

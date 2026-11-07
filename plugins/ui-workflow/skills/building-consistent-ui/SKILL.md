@@ -18,10 +18,13 @@ Third-party design skills are tools this workflow calls; they never override the
 | Project state | Read |
 | --- | --- |
 | No `docs/design.md` | `setup.md`, then come back |
+| Any change | `<plugin>/shared/acceptance.md` first: write `.verify/acceptance.md` |
 | Request: one page/module should look different from `docs/design.md` | "Style change requests" below |
 | Building or changing a screen | `build.md`, then `verify.md` |
 | Asked only to review or check UI | `verify.md`, then `design-review.md` |
-| No scripted way to drive the app's journeys | `functional-verify.md` |
+| No scripted way to start the app and drive its journeys | `<plugin>/shared/ctl.md` |
+| The change also touches endpoints, jobs or schema | the `building-reliable-backend` skill for the api lane; both lanes must pass |
+| Project still has `.ui-verify/` (0.1) | `node <plugin>/scripts/run-verify.mjs --migrate`, then follow what it prints |
 
 ## Style change requests
 
@@ -60,6 +63,7 @@ A tool missing: say which, continue with this skill's own checks, never pretend 
 | "Only additive, it is scoped to one folder" | A second theme is a second product |
 | "Typecheck, lint and e2e pass" | That proves it runs, not how it looks |
 | "It renders and aligns, approve it" | Correct is not crafted; a fresh reviewer runs `design-review.md` |
+| "Acceptance is obvious, skip it" | Then it takes three lines; double submit and 390px are not obvious |
 | "I'll review my own screenshots, it's faster" | The builder grades too kindly; dispatch a fresh reviewer |
 | "The diffs are expected, update the snapshots" | `verify.md` baseline rules first |
 | "No time for screenshots" | Then report it as unverified, not done |
@@ -68,7 +72,8 @@ A tool missing: say which, continue with this skill's own checks, never pretend 
 
 ## Done means
 
-`run-verify.mjs` printed `pass`, `.ui-verify/review.md` (written with `design-review.md`) is newer
-than that run, has no open line and says `Verdict: approved`, `make-evidence.mjs` wrote the evidence
-pack after it, and your final message starts with the evidence path and the merge tier, then lists
-the follow-ups and what could not be checked.
+`run-verify.mjs` printed `pass` for every lane the change touched, `.verify/review-ui.md` (written
+with `design-review.md` by a fresh reviewer) is newer than that run, has no open line, marks every
+acceptance id from `.verify/acceptance.md` and says `Verdict: approved`, `make-evidence.mjs` wrote
+the evidence pack after it, and your final message starts with the evidence path and the merge tier,
+then lists the follow-ups, the criteria not checked and what could not be checked.
