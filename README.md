@@ -70,16 +70,16 @@ baoyu-design 是可选的看图调色工具，只在项目仓库外用（它含�
 
 | 路径 | 作用 |
 | --- | --- |
-| `plugins/ui-workflow/skills/building-consistent-ui/` | 前端：入口 `SKILL.md`，`setup.md`、`build.md`、`verify.md`、`design-review.md`（截图评审） |
-| `plugins/ui-workflow/skills/building-reliable-backend/` | 后端：入口 `SKILL.md`，`setup.md`、`build.md`、`verify.md`、`code-review.md`（独立代码评审），`templates/backend.md` |
-| `plugins/ui-workflow/shared/acceptance.md` | 两边共用：怎么写验收标准、异常情况清单、评审怎么标记 |
-| `plugins/ui-workflow/shared/ctl.md` | 两边共用：生成项目的控制命令（读写分开），以及 `verify-<app>` skill 和用户路径 |
-| `plugins/ui-workflow/shared/verify.config.json` | `.verify/config.json` 模板（ui 和 api 两条 lane） |
-| `plugins/ui-workflow/scripts/run-verify.mjs` | 按 lane 跑检查（含内置负向检查），按真实退出码记录；`--restore`、`--migrate` |
-| `plugins/ui-workflow/scripts/make-evidence.mjs` | 生成证据包：合并分档、验收标准、机器检查、前后对比截图、录屏；`--pr` 输出 PR 描述 |
-| `plugins/ui-workflow/scripts/stop-gate.mjs` | Stop 钩子 |
-| `plugins/ui-workflow/scripts/check-raw-styles.mjs` | 找出写死的颜色、Tailwind 色板类、任意值 |
-| `plugins/ui-workflow/scripts/find-tools.mjs` | 找到已安装的 taste-skill、ui-ux-pro-max、baoyu-design |
+| `plugins/workflow/skills/building-consistent-ui/` | 前端：入口 `SKILL.md`，`setup.md`、`build.md`、`verify.md`、`design-review.md`（截图评审） |
+| `plugins/workflow/skills/building-reliable-backend/` | 后端：入口 `SKILL.md`，`setup.md`、`build.md`、`verify.md`、`code-review.md`（独立代码评审），`templates/backend.md` |
+| `plugins/workflow/shared/acceptance.md` | 两边共用：怎么写验收标准、异常情况清单、评审怎么标记 |
+| `plugins/workflow/shared/ctl.md` | 两边共用：生成项目的控制命令（读写分开），以及 `verify-<app>` skill 和用户路径 |
+| `plugins/workflow/shared/verify.config.json` | `.verify/config.json` 模板（ui 和 api 两条 lane） |
+| `plugins/workflow/scripts/run-verify.mjs` | 按 lane 跑检查（含内置负向检查），按真实退出码记录；`--restore`、`--migrate` |
+| `plugins/workflow/scripts/make-evidence.mjs` | 生成证据包：合并分档、验收标准、机器检查、前后对比截图、录屏；`--pr` 输出 PR 描述 |
+| `plugins/workflow/scripts/stop-gate.mjs` | Stop 钩子 |
+| `plugins/workflow/scripts/check-raw-styles.mjs` | 找出写死的颜色、Tailwind 色板类、任意值 |
+| `plugins/workflow/scripts/find-tools.mjs` | 找到已安装的 taste-skill、ui-ux-pro-max、baoyu-design |
 | `docs/adr/` | 关键取舍的决策记录 |
 
 ## 升级第三方工具
