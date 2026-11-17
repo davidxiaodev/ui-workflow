@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { rmSync } from "node:fs";
 import { join } from "node:path";
 import { after, describe, it } from "node:test";
@@ -51,6 +52,39 @@ describe("treeHash", () => {
     rmSync(join(root, "test/other.test.mjs"));
     assert.notEqual(treeHash(root), t1);
     assert.equal(git(root, "status", "--porcelain").includes("A "), false, "the real index is untouched");
+  });
+});
+
+describe("treeHash and racy edits", () => {
+  const second = () => Math.floor(Date.now() / 1000);
+  const waitNextSecond = () => {
+    const s0 = second();
+    while (second() === s0) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
+  };
+  // Ground truth: hash the working tree from an empty index, with no cached stat data to trust.
+  const freshHash = (root) => {
+    const env = { ...process.env, GIT_INDEX_FILE: join(root, ".git", "fresh-index") };
+    const run = (...a) => execFileSync("git", a, { cwd: root, env, encoding: "utf8" }).trim();
+    run("read-tree", "--empty");
+    run("add", "-A", "--", ".", ":(exclude).verify");
+    const t = run("write-tree");
+    rmSync(env.GIT_INDEX_FILE);
+    return t;
+  };
+
+  it("sees a same-size edit made in the same second as the last index write, hashed a second later", () => {
+    let tried = 0;
+    for (let i = 0; i < 6 && tried < 3; i++) {
+      waitNextSecond();
+      const s0 = second();
+      const root = project();
+      write(root, { "src/math.mjs": "export const add = (a, b) => a - b;\n" }); // same length as a + b
+      if (second() !== s0) continue; // commit and edit straddled a second: not the racy case
+      tried++;
+      waitNextSecond();
+      assert.equal(treeHash(root), freshHash(root), "the same-size edit was invisible to treeHash");
+    }
+    assert.ok(tried > 0, "could not set up the racy case");
   });
 });
 
