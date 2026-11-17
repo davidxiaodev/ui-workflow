@@ -1,5 +1,7 @@
 # ui-workflow
 
+仓库：`davidxiaodev/workflow`。
+
 一个 Claude Code 插件：让 AI 改前端和后端时，先说清楚"做成什么样算对"，按项目的约定去做，
 在独立验证之前不能说"做完了"，并且把每次犯过的错变成下次能自动拦住的检查。
 
@@ -116,9 +118,12 @@ CI 里目前不跑独立评审，分档会标明"checks only"。评审放进 CI 
 ## 安装
 
 ```bash
-/plugin marketplace add davidxiaodev/ui-workflow
+/plugin marketplace add davidxiaodev/workflow
 /plugin install ui-workflow@ui-workflow
 ```
+
+仓库已从 `davidxiaodev/ui-workflow` 改名为 `davidxiaodev/workflow`，插件名和 marketplace 名仍是 `ui-workflow`。
+之前用旧名字加过 marketplace 的，GitHub 会跳转，但建议 `/plugin marketplace remove ui-workflow` 后用新名字重新加。
 
 可选但推荐（插件会自动找到它们，见 `vendor.lock.json` 里锁定的版本）：
 

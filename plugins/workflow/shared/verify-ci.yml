@@ -36,7 +36,7 @@ jobs:
           node-version: 22
       - name: Get ui-workflow
         run: |
-          git clone --quiet --depth 1 --branch "$UI_WORKFLOW_REF" https://github.com/davidxiaodev/ui-workflow "$RUNNER_TEMP/ui-workflow"
+          git clone --quiet --depth 1 --branch "$UI_WORKFLOW_REF" https://github.com/davidxiaodev/workflow "$RUNNER_TEMP/ui-workflow"
           echo "UI_WORKFLOW=$RUNNER_TEMP/ui-workflow/plugins/workflow" >> "$GITHUB_ENV"
 
       # >>> project setup: install dependencies, start the services the checks need
