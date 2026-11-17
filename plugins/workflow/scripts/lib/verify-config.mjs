@@ -182,10 +182,30 @@ export function treeHash(root) {
   }
 }
 
+/** The hash of what the next commit would contain (the staged index), without .verify/: comparable with treeHash. */
+export function indexTreeHash(root) {
+  const tmp = mkdtempSync(join(tmpdir(), "verify-index-"));
+  const index = join(tmp, "index");
+  try {
+    const realIndex = gitLines(root, ["rev-parse", "--git-path", "index"])[0];
+    const realPath = realIndex && (isAbsolute(realIndex) ? realIndex : join(root, realIndex));
+    const env = { ...process.env, GIT_INDEX_FILE: index };
+    if (realPath && existsSync(realPath)) copyFileSync(realPath, index);
+    else execFileSync("git", ["read-tree", "--empty"], { cwd: root, env, stdio: "ignore" });
+    execFileSync("git", ["rm", "-r", "--cached", "--quiet", "--ignore-unmatch", "--", VERIFY_DIR], { cwd: root, env, stdio: "ignore" });
+    return execFileSync("git", ["write-tree"], { cwd: root, env, encoding: "utf8" }).trim();
+  } catch {
+    return null;
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
 // Files that define how a change is judged. A change to one of them is a change to the checks
 // themselves, so it is never verified by those checks alone: it lands in merge tier 3.
 export const DEFAULT_GUARD = [
   CONFIG_PATH,
+  "docs/checklist.md",
   ".claude/settings.json",
   ".claude/settings.local.json",
   ".claude/hooks/**",

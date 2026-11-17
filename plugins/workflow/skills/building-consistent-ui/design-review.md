@@ -68,7 +68,8 @@ Drop false positives:
 - Decided in `docs/design.md`: a decision, not a finding. If you think the decision is wrong, or it
   can be read two ways, say so once as a Note addressed to the user and state the reading you used;
   never "fix" design.md yourself.
-- Outside the scope set in step 1.
+- Outside the scope set in step 1. A problem you see on a page in scope but in a part this change
+  did not touch is `Pre-existing`: report it, it does not block.
 - Lint, type or test problems: owned by the other checks.
 
 If you cannot say how a finding costs the user or makes the screen look generated, it is taste. A few
@@ -88,11 +89,17 @@ Focal point: <page>: <element>; …
 - [ ] A2 not met · <what you saw>
 - [-] A3 not checked · <why>
 
+## Checklist
+- [x] C3 holds · <evidence>
+(or "- none triggered")
+
 ## Findings
 - [ ] Blocker · <page> <width> · <lens>: <what defaulted> → <why it costs the user> → <the decision that fixes it>
 - [ ] Should-fix · …
 - [-] Should-fix · … (follow-up, deferred: <reason from the brief>)
+- Pre-existing · <page> <width> · <a problem in a part this change did not touch>
 - Note · …
+(round 2 and later: every earlier finding carried over as fixed, still open or deferred)
 
 ## Consistency
 - Group <group from ui-pages.json> at 390: <pages>: <same | differences, each listed above | only page in its group>
@@ -102,7 +109,7 @@ Not checked: <dark mode, real device, …>
 Verdict: <approved | changes required>
 ```
 
-Approve only when no Blocker, Should-fix or acceptance criterion is open (`- [ ]`) and every
+Approve only when no Blocker, Should-fix, checklist item or acceptance criterion is open (`- [ ]`) and every
 acceptance id appears under `## Acceptance`; deferred follow-ups may remain. Any
 `- [ ]` line, a line starting with `FAIL`, or a verdict other than `approved` keeps the Stop gate closed.
 

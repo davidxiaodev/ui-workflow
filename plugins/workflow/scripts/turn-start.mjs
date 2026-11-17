@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // Claude Code UserPromptSubmit hook. Records the working tree's hash when a turn starts
 // (.verify/turn.json), so the Stop gate checks a turn only when it changed the content, committed or
-// not, and leaves turns that only talked alone. Does nothing in a project without .verify/.
+// not, and leaves turns that only talked alone. Also records where the plugin lives
+// (.verify/plugin-root) for the commit-stamp git hook. Does nothing in a project without .verify/.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { gitRoot, treeHash, VERIFY_DIR } from "./lib/verify-config.mjs";
 
 let input = {};
@@ -15,6 +17,8 @@ try {
 }
 const root = gitRoot(input.cwd ?? process.cwd());
 if (!root || !existsSync(join(root, VERIFY_DIR))) process.exit(0);
+// Where the plugin lives now, for the git hook stamp.mjs installs (the folder changes on updates).
+writeFileSync(join(root, VERIFY_DIR, "plugin-root"), resolve(dirname(fileURLToPath(import.meta.url)), "..") + "\n");
 const tree = treeHash(root);
 if (tree) {
   mkdirSync(join(root, VERIFY_DIR), { recursive: true });

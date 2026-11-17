@@ -1,0 +1,11 @@
+{
+  "lane": "api",
+  "kind": "clean",
+  "request": "Cap the page size of GET /products at 100 and default it to 20.",
+  "acceptance": [
+    "A1 no limit returns 20 items",
+    "A2 limit=500 returns 100 items",
+    "A3 limit=0 or a non-number returns 400"
+  ],
+  "answer": "Correct: the limit is parsed, validated and clamped, with tests for each case."
+}
