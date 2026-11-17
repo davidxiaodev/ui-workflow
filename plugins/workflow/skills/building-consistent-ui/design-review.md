@@ -79,6 +79,7 @@ high-conviction findings beat a long list.
 ```markdown
 # Review <runDir from last-run.json>
 Reviewer: <model, or "same agent, no independent review available">
+Tree: <lanes.ui.tree in .verify/last-run.json: the content you reviewed>
 Scope: <pages and widths>
 Focal point: <page>: <element>; …
 

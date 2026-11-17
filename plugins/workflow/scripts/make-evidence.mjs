@@ -7,6 +7,12 @@
 //   node make-evidence.mjs [--root <project root>] [--pr]
 //
 // --pr also prints a pull request body (text only) to stdout.
+//
+// "The change" is everything that differs from the base commit (the merge-base with the default
+// branch, or VERIFY_BASE): commits on this branch, staged, unstaged and untracked files, deletions.
+// The pack names the working tree's hash; it is ready only when every lane's run and review name
+// that same tree. Guarded changes (the checks themselves, deleted tests, skipped or loosened tests)
+// raise the tier: lib/verify-config.mjs guardChanges.
 // Exit 0 always unless the inputs are missing (2).
 import { execFileSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
@@ -14,14 +20,15 @@ import { basename, dirname, join, relative, resolve } from "node:path";
 import {
   acceptanceIds,
   acceptanceLines,
+  changedSince,
   contractPaths,
-  gitLines,
+  guardChanges,
   inLane,
   loadConfig,
   matchAny,
   OPEN_LINE,
   readJson,
-  workingChanges,
+  treeHash,
 } from "./lib/verify-config.mjs";
 
 const args = process.argv.slice(2);
@@ -37,10 +44,14 @@ if (!cfg || !last?.lanes) {
 const runDir = last.runDir;
 const rel = (f) => relative(runDir, f).split("\\").join("/");
 
-// What this change touched: uncommitted work plus commits not yet on the upstream or default branch.
-const committed = gitLines(root, ["diff", "--name-only", "HEAD@{upstream}...HEAD"]);
-const sinceDefault = committed.length ? [] : gitLines(root, ["diff", "--name-only", "origin/HEAD...HEAD"]);
-const touched = [...new Set([...workingChanges(root), ...committed, ...sinceDefault])].filter((f) => !f.startsWith(".verify/"));
+// What this change touched, measured from the base commit, deletions included.
+const allChanges = changedSince(root, cfg.base);
+const changes = allChanges.filter((c) => !c.path.startsWith(".verify/"));
+const touched = changes.map((c) => c.path);
+const guarded = guardChanges(cfg, allChanges); // .verify/config.json is a guard file
+
+const current = treeHash(root);
+const short = (h) => (h ? h.slice(0, 12) : "none");
 
 let lanes = cfg.lanes.filter((l) => touched.some((f) => inLane(l, f)));
 if (lanes.length === 0) lanes = cfg.lanes.filter((l) => last.lanes[l.name]);
@@ -56,6 +67,7 @@ const reviews = lanes.map((lane) => {
     text,
     verdict: /^Verdict:\s*(.+)$/im.exec(text)?.[1].trim() ?? "missing",
     reviewer: /^Reviewer:\s*(.+)$/im.exec(text)?.[1].trim() ?? "not stated",
+    tree: /^Tree:\s*([0-9a-f]{7,40})\b/im.exec(text)?.[1] ?? null,
     notChecked: /^Not checked:\s*(.+)$/im.exec(text)?.[1].trim() ?? "not stated",
     open: lines.filter(OPEN_LINE),
     deferred: lines.filter((l) => /^\s*-\s*\[-\]/.test(l) && !acceptanceLines(text).includes(l)),
@@ -83,25 +95,40 @@ const negativeSkips = lanes.flatMap((l) => (last.lanes[l.name]?.checks ?? []).fi
 const notChecked = criteria.filter((c) => c.status === "not checked").map((c) => c.id);
 
 const lanesReady = lanes.every((l) => last.lanes[l.name]?.result === "pass");
+const staleRuns = lanes.filter((l) => !current || last.lanes[l.name]?.tree !== current).map((l) => l.name);
+const staleReviews = reviews.filter((r) => !current || !r.tree || !current.startsWith(r.tree)).map((r) => r.lane.name);
 const reviewsReady = reviews.every((r) => /^approved\b/i.test(r.verdict) && r.open.length === 0);
+const sameTree = staleRuns.length === 0 && staleReviews.length === 0;
+const guard3 = guarded.filter((g) => g.tier === 3);
+const guard2 = guarded.filter((g) => g.tier === 2);
 const acceptanceReady = criteria.length > 0 && criteria.every((c) => c.status === "met" || c.status === "not checked");
 const why2 = [
   baselineChanges.length && "screenshot baselines changed",
   sharedChanges.length && "shared parts changed",
   notChecked.length && `acceptance not checked: ${notChecked.join(", ")}`,
   negativeSkips.length && `source changed with no test change (${negativeSkips.join(", ")})`,
+  guard2.length && `checks silenced or retried (${[...new Set(guard2.map((g) => g.path))].join(", ")})`,
 ].filter(Boolean);
-const tier = !(lanesReady && reviewsReady && acceptanceReady)
-  ? { id: "not ready", rule: "Checks, reviews or acceptance did not pass. Do not merge." }
-  : contractChanges.length
-    ? { id: "3", rule: "A contract changed (design, API, data or migrations). The owner must confirm before merge." }
+const why3 = [
+  contractChanges.length && "a contract changed (design, API, data or migrations)",
+  guard3.length && `the checks themselves changed (${[...new Set(guard3.map((g) => `${g.path}: ${g.why}`))].join("; ")})`,
+].filter(Boolean);
+const notReady = [
+  !lanesReady && "a lane's checks did not pass",
+  !reviewsReady && "a review is not approved or has open lines",
+  !acceptanceReady && "an acceptance criterion is not met or not reviewed",
+  !sameTree && `verified a different tree than the one on disk (${[...staleRuns.map((n) => `run ${n}`), ...staleReviews.map((n) => `review ${n}`)].join(", ")})`,
+].filter(Boolean);
+const tier = notReady.length
+  ? { id: "not ready", rule: `${notReady.join("; ")}. Do not merge.` }
+  : why3.length
+    ? { id: "3", rule: `${why3.join("; ")}. The owner must confirm before merge.` }
     : why2.length
       ? { id: "2", rule: `Look before merge: ${why2.join("; ")}.` }
       : { id: "1", rule: "Verified and contained. A glance at this page is enough to merge." };
 
 // Screenshots from the ui lanes' run folders.
 const uiDirs = [...new Set(lanes.filter((l) => l.kind === "ui").map((l) => last.lanes[l.name]?.runDir).filter(Boolean))];
-const changedNow = workingChanges(root);
 const snapshots = walk(root, (d) => !/node_modules|\.git$|\.next$|\.verify$/.test(d)).filter((f) => /-snapshots[\\/].+\.png$/.test(f));
 const pages = new Map();
 for (const dir of uiDirs) {
@@ -125,9 +152,12 @@ for (const f of [acceptancePath, ...reviews.map((r) => r.path)]) if (existsSync(
 const md = [];
 md.push(`# Evidence: ${basename(runDir)}`, "");
 md.push(`**Merge tier: ${tier.id}.** ${tier.rule}`, "");
+md.push(`Tree: ${current ?? "unknown"}`, `Base: ${cfg.base ?? "none"}`, "");
 md.push(`- Lanes: ${lanes.map((l) => l.name).join(", ") || "none"}`);
 for (const r of reviews) md.push(`- Review ${r.lane.name}: ${r.verdict}, by ${r.reviewer}; ${r.open.length} open, ${r.deferred.length} deferred`);
 md.push(`- Contract changes: ${list(contractChanges)}`);
+md.push(`- Check changes: ${guarded.length ? guarded.map((g) => `${g.path} (${g.why}, tier ${g.tier})`).join(", ") : "none"}`);
+md.push(`- Checks read from: ${last.config?.source ?? "working"} config${last.config?.differsFromBase ? " (the working .verify/config.json differs from base)" : ""}`);
 md.push(`- Baselines changed: ${list(baselineChanges)}`);
 md.push(`- Shared parts changed: ${list(sharedChanges)}`);
 for (const r of reviews) md.push(`- Not checked (${r.lane.name}): ${r.notChecked}`);
@@ -185,7 +215,9 @@ if (wantPr) {
     "### Checks",
     ...lanes.map((l) => `- ${l.name}: ${last.lanes[l.name]?.result ?? "not run"}; review: ${reviews.find((r) => r.lane === l)?.verdict} (${reviews.find((r) => r.lane === l)?.reviewer})`),
     `- Contract changes: ${list(contractChanges)}`,
+    `- Check changes: ${guarded.length ? guarded.map((g) => `${g.path} (${g.why})`).join(", ") : "none"}`,
     `- Baselines changed: ${list(baselineChanges)}`,
+    `- Verified tree: \`${short(current)}\` against base \`${short(cfg.base)}\``,
     ...(pages.size ? [`- Pages verified: ${[...pages.values()].map((p) => `${p.name} (${p.widths.map((w) => w.width).join("/")})`).join(", ")}`] : []),
     `- Deferred follow-ups: ${deferred.length ? "" : "none"}`,
     ...deferred,
@@ -203,11 +235,11 @@ function beforeImage(name, width) {
   const out = join(runDir, "before", basename(match));
   mkdirSync(dirname(out), { recursive: true });
   try {
-    const bytes = execFileSync("git", ["show", `HEAD:${relPath}`], { cwd: root, maxBuffer: 64 << 20, stdio: ["ignore", "pipe", "ignore"] });
+    const bytes = execFileSync("git", ["show", `${cfg.base ?? "HEAD"}:${relPath}`], { cwd: root, maxBuffer: 64 << 20, stdio: ["ignore", "pipe", "ignore"] });
     writeFileSync(out, bytes);
     return out;
   } catch {
-    if (!changedNow.includes(relPath)) {
+    if (!touched.includes(relPath)) {
       copyFileSync(match, out);
       return out;
     }

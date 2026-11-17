@@ -60,7 +60,7 @@ states, tables, navigation). Copy the numbers into design.md's UX rules. Ignore 
 
 ## 6. Wire the checks
 
-1. The project must be a git repository (the Stop gate reads `git status` and is off without one).
+1. The project must be a git repository (the Stop gate reads git and is off without one).
    If it is not, ask the user before running `git init`.
 2. Copy `<plugin>/scripts/check-raw-styles.mjs` to `scripts/ui/` in the project. In its check
    command pass `--allow <component library folder>` (shadcn's `components/ui`): that folder is where
@@ -100,8 +100,11 @@ states, tables, navigation). Copy the numbers into design.md's UX rules. Ignore 
    first page you build creates its baseline the same way (verify.md, New pages). Write the OS or
    container used in design.md's Baselines line; Playwright adds it to snapshot names
    (`-linux`, `-darwin`), so later updates must run there too.
-9. If pages exist, run `node <plugin>/scripts/run-verify.mjs` and follow `verify.md` once end to
-   end. If none exist, the first build does this.
+9. If pages exist, run `node <plugin>/scripts/run-verify.mjs --config working` and follow `verify.md`
+   once end to end. If none exist, the first build does this. (`--config working` because the checks
+   are not on the default branch yet. Once they are, every run reads them from the base commit, so a
+   later change cannot edit the checks that judge it; a change to the checks themselves runs with
+   `--config working` and is merge tier 3.)
 
 ## Asking a user who is not a designer
 

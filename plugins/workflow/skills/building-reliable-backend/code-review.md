@@ -65,6 +65,7 @@ touch. A few findings you are sure of beat a long list; say how sure you are whe
 ```markdown
 # Review <runDir of lanes.api in last-run.json>
 Reviewer: <model, or "same agent, no independent review available">
+Tree: <lanes.api.tree in .verify/last-run.json: the content you reviewed>
 Scope: <base ref>..<working tree>; <files or areas>
 
 ## Acceptance

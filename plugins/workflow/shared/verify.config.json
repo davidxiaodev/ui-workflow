@@ -1,4 +1,5 @@
 {
+  "guard": [],
   "tests": ["**/test/**", "**/tests/**", "**/__tests__/**", "**/e2e/**", "**/journeys/**", "**/*.{test,spec,e2e}.*", "**/*_test.*", "**/test_*.py", "**/*-snapshots/**"],
   "lanes": {
     "ui": {

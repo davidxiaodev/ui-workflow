@@ -47,7 +47,8 @@ Read: docs/backend.md, .verify/acceptance.md, .verify/last-run.json (lanes.api),
 <base ref> (git diff <base ref>), and the logs it names.
 The user asked for: <the user's request, in their words>.
 Deferred findings from earlier rounds (record as "- [-]" if still present): <list with reasons, or none>.
-Write .verify/review-api.md as code-review.md shows, with "Reviewer: <your model>" under the title.
+Write .verify/review-api.md as code-review.md shows, with "Reviewer: <your model>" and
+"Tree: <lanes.api.tree from last-run.json>" under the title.
 Do not edit any other file. Reply with the verdict and the Blocker lines.
 ```
 
@@ -70,9 +71,10 @@ After the review, `node <plugin>/scripts/make-evidence.mjs` (add `--pr` for a pu
 | Tier | When | Who must look |
 | --- | --- | --- |
 | 1 | checks pass, review approved, every criterion met, nothing below | a glance at evidence.md |
-| 2 | a shared module changed, a criterion "not checked", source changed with no test change, baselines updated | the user reads the evidence and the flagged parts of the diff |
-| 3 | `docs/backend.md`, the contract file or a migration changed | the user confirms before merge |
-| not ready | a check failed, the review is not approved, a criterion not met or not reviewed | nobody merges |
+| 2 | a shared module changed, a criterion "not checked", source changed with no test change, baselines updated, a check silenced in the code (`@ts-ignore`, `eslint-disable`, `noqa`) or retries added | the user reads the evidence and the flagged parts of the diff |
+| 3 | `docs/backend.md`, the contract file or a migration changed; or the checks themselves changed: `.verify/config.json`, a test, lint or CI config, a deleted test, a test that skips, focuses or loosens a check | the user confirms before merge |
+| not ready | a check failed, the review is not approved, a criterion not met or not reviewed, or the run or the review is of a different tree than the one on disk | nobody merges |
 
-The tier is computed, never chosen. Your final message is at least two lines: the evidence.md path and
+The tier is computed, never chosen. The checks come from `.verify/config.json` on the base commit;
+a change that edits them reruns with `--config working`, and is tier 3 either way. Your final message is at least two lines: the evidence.md path and
 the tier, then deferred follow-ups, criteria not checked, and checks that could not run (or "none").

@@ -3,6 +3,7 @@
 // .verify/last-run.json from real exit codes only, so the Stop gate can trust it.
 //
 //   node run-verify.mjs [--lane ui,api] [--only name,name] [--root <project root>]
+//                       [--config base|working] [--base <ref>]
 //   node run-verify.mjs --restore     put back files a crashed negative check left reverted
 //   node run-verify.mjs --migrate     move a 0.1 .ui-verify/ setup to .verify/ (lane "ui")
 //
@@ -12,12 +13,21 @@
 //       { "name": "negative", "negative": { "test": "pnpm --dir services/api test" } } ] } } }
 // A check with "negative" instead of "run" is the built-in negative check (lib/negative.mjs).
 // Each check gets VERIFY_RUN_DIR (and UI_VERIFY_RUN_DIR, the 0.1 name) and VERIFY_LANE.
+//
+// The checks come from .verify/config.json as it is on the base commit (the merge-base with the
+// default branch, or --base / VERIFY_BASE), so a change cannot edit the checks that judge it.
+// --config working uses the working copy: for a change that sets up or extends the checks. That
+// change is a guarded change (merge tier 3) either way.
+//
+// The run records a hash of the working tree (lib/verify-config.mjs treeHash). The Stop gate and
+// make-evidence compare it with the tree now and with the one each review names, instead of
+// trusting file times.
 // Exit 0 = every check passed, 1 = a check failed, 2 = no config or nothing to run.
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { backupExists, restore, runNegative } from "./lib/negative.mjs";
-import { legacyConfigExists, loadConfig, readJson, VERIFY_DIR } from "./lib/verify-config.mjs";
+import { legacyConfigExists, loadConfig, readJson, resolveBase, treeHash, VERIFY_DIR } from "./lib/verify-config.mjs";
 
 const args = process.argv.slice(2);
 const opt = (name) => {
@@ -28,7 +38,12 @@ const root = resolve(opt("root") ?? process.cwd());
 
 if (args.includes("--migrate")) process.exit(migrate());
 
-const cfg = loadConfig(root);
+const configSource = opt("config") ?? "base";
+if (!["base", "working"].includes(configSource)) {
+  console.error('run-verify: --config takes "base" or "working".');
+  process.exit(2);
+}
+const cfg = loadConfig(root, { source: configSource, base: opt("base") ? resolveBase(root, opt("base")) : undefined });
 if (!cfg) {
   console.error(
     legacyConfigExists(root)
@@ -61,12 +76,28 @@ if (lanes.every((l) => l.checks.filter((c) => !only || only.includes(c.name)).le
   process.exit(2);
 }
 
+if (cfg.workingDiffers && cfg.source === "base") {
+  console.log(
+    "run-verify: .verify/config.json differs from the base commit; running the base's checks. For a change that sets up or extends the checks, rerun with --config working (the change is merge tier 3 either way).",
+  );
+}
+if (cfg.source === "working" && configSource === "base") console.log("run-verify: no .verify/config.json on the base commit; using the working copy.");
+
+const treeBefore = treeHash(root);
 const startedAt = new Date();
 const runDir = join(cfg.dir, "runs", startedAt.toISOString().replace(/[:.]/g, "-"));
 mkdirSync(runDir, { recursive: true });
 
 const previous = readJson(join(cfg.dir, "last-run.json"));
-const record = { runDir, finishedAt: null, lanes: { ...(previous?.lanes ?? {}) } };
+const record = {
+  runDir,
+  finishedAt: null,
+  tree: null,
+  base: cfg.base,
+  config: { source: cfg.source, differsFromBase: cfg.workingDiffers },
+  lanes: { ...(previous?.lanes ?? {}) },
+};
+const ranLanes = [];
 let anyFailed = false;
 
 for (const lane of lanes) {
@@ -105,9 +136,28 @@ for (const lane of lanes) {
     finishedAt: new Date().toISOString(),
     result: failed.length ? "fail" : only ? "partial" : "pass",
     runDir,
+    tree: null,
+    config: cfg.source,
     checks: results,
   };
+  ranLanes.push(lane.name);
   console.log(`run-verify: lane ${lane.name}: ${record.lanes[lane.name].result}${failed.length ? ` (failed: ${failed.map((f) => f.name).join(", ")})` : ""}`);
+}
+
+// The tree the checks saw. A check that wrote to tracked or untracked source files (a formatter in
+// write mode, a code generator) makes the run unusable: what passed is not what is on disk.
+const treeAfter = treeHash(root);
+record.tree = treeAfter;
+for (const name of ranLanes) {
+  record.lanes[name].tree = treeAfter;
+  if (treeBefore !== treeAfter) {
+    record.lanes[name].result = "fail";
+    record.lanes[name].note = "files changed while the checks ran; a check writes to the source (run formatters in check mode)";
+  }
+}
+if (treeBefore !== treeAfter) {
+  anyFailed = true;
+  console.log("run-verify: files changed while the checks ran, so the result does not describe what is on disk. Run formatters and generators in check mode, then rerun.");
 }
 
 record.finishedAt = new Date().toISOString();
