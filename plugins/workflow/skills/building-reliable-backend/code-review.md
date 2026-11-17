@@ -56,9 +56,9 @@ line, or only believe it.
 | Should-fix | a real gap with a contained cost: a missing negative-path test, a missing timeout, an N+1 on a small table | fix now, or a follow-up the user can see |
 | Note | minor | one line |
 
-Drop what you cannot tie to a concrete failure (input → wrong output, crash, leak, lost row); that is
-taste. Drop what docs/backend.md decided, what tooling already enforces, and what the diff did not
-touch. A few findings you are sure of beat a long list; say how sure you are when you are not.
+A bug in code the diff did not touch is `Pre-existing`: report it, it does not block. A finding that
+is one instance of a class lists every instance. Drop what you cannot tie to a concrete failure (input → wrong output, crash, leak, lost row); that is
+taste. Drop what docs/backend.md decided and what tooling already enforces. A few findings you are sure of beat a long list; say how sure you are when you are not.
 
 ## 5. Write `.verify/review-api.md`
 
@@ -73,11 +73,18 @@ Scope: <base ref>..<working tree>; <files or areas>
 - [ ] A2 not met · <what you saw>
 - [-] A3 not checked · <why>
 
+## Checklist
+- [x] C3 holds · <evidence>
+- [ ] C7 broken · <what you saw>
+(or "- none triggered")
+
 ## Findings
-- [ ] Blocker · <file:line> · <lens>: <what is wrong> → <the input that shows it> → <the fix>
+- [ ] Blocker · <file:line> · <lens>: <what is wrong> → <the input that shows it> → <the fix> (disproof tried: <how>, for a deep review)
 - [ ] Should-fix · …
 - [-] Should-fix · … (follow-up, deferred: <reason from the brief>)
+- Pre-existing · <file:line> · <what is wrong in code this change did not touch>
 - Note · …
+(round 2 and later: every earlier finding carried over as fixed, still open or deferred)
 
 ## Safety fact
 <the one fact> · <proven by running: how | pointed at file:line | believed, not proven>
@@ -87,8 +94,8 @@ Not checked: <what could not be checked and why, or "none">
 Verdict: <approved | changes required>
 ```
 
-Approve only when no Blocker or Should-fix is open (`- [ ]`) and every acceptance id is marked met or
-not checked. Any `- [ ]` line or a verdict other than `approved` keeps the Stop gate closed.
+Approve only when no Blocker, Should-fix or checklist item is open (`- [ ]`) and every acceptance id
+is marked met or not checked. Any `- [ ]` line or a verdict other than `approved` keeps the Stop gate closed.
 
 Adapted from gstack's `/review` checklists and specialists (Garry Tan, MIT), pstack's `blast-radius`
 (Lauren Tan, MIT) and mattpocock/skills `code-review` (MIT).

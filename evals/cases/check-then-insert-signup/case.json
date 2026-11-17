@@ -1,0 +1,14 @@
+{
+  "lane": "api",
+  "kind": "bug",
+  "request": "Sign-up must never create two accounts for the same email.",
+  "acceptance": [
+    "A1 POST /signup with a new email creates one account",
+    "A2 two POST /signup calls with the same email at the same time leave exactly one account"
+  ],
+  "answer": "signup checks for the email and then inserts, with no unique constraint, so two concurrent requests both insert.",
+  "match": [
+    "(signup|users|email)",
+    "(race|concurren|unique|at the same time|check.then.insert|duplicate|atomic|constraint)"
+  ]
+}

@@ -25,32 +25,34 @@ baseline once they agree. Then run `run-verify.mjs` in full.
 
 ## Review the screenshots: someone else judges
 
-The agent that built the change does not review it. Dispatch a fresh subagent (a different model
-when one is available) with exactly this brief, and nothing about how the change was made:
+The agent that built the change does not review it. Write the brief with
 
-```text
-Review UI screenshots. Follow <skill>/design-review.md exactly.
-Read: docs/design.md, .verify/acceptance.md, .verify/last-run.json (lanes.ui.runDir),
-<web app>/e2e/ui-look/ui-pages.json.
-The user asked for: <the user's request, in their words>.
-Scope: <pages and widths the change touched, plus pages sharing a changed part>.
-Deferred Should-fixes (record as "- [-]" follow-ups if still present): <list with reasons, or none>.
-Baselines updated in this change (copy into the review): <page-width: what and why, or none>.
-Write .verify/review-ui.md as design-review.md step 5 shows, with "Reviewer: <your model>" and
-"Tree: <lanes.ui.tree from last-run.json>" under the title. Do not edit any other file. Reply with the verdict and the Blocker lines.
+```bash
+node <plugin>/scripts/review-brief.mjs --lane ui --request "<the user's request, in their words>" \
+  --scope "<pages and widths the change touched, plus pages sharing a changed part>" \
+  --baselines "<page-width: what and why, or none>"
 ```
+
+and dispatch a fresh subagent (a different model when one is available) with exactly its output,
+and nothing about how the change was made. The brief names the tree under review, sets the depth,
+lists the `docs/checklist.md` items the diff triggers, and from the second round on gives the
+reviewer the previous findings and only the diff since then. Put deferred Should-fixes, one per line
+with the reason, in `.verify/deferred-ui.md` before writing the brief.
 
 Then:
 
 1. Read its review. You may disagree in your final message to the user; you may not edit its
    findings or its verdict.
-2. Fix Blockers and the Should-fixes you take on, rerun `run-verify.mjs`, and dispatch a new fresh
-   reviewer with the same brief. Never resume the previous reviewer; it would grade its own advice.
+2. Fix Blockers and the Should-fixes you take on, rerun `run-verify.mjs`, write a new brief, and
+   dispatch a new fresh reviewer. Never resume the previous reviewer; it would grade its own advice.
 3. Defer a Should-fix only with a reason the user would accept; every deferral appears in your final
    message. Blockers are never deferred.
-4. After three review rounds without `approved`, stop and give the user the open findings and the
-   screenshots instead of starting a fourth.
-5. No subagent tool here: review it yourself with `design-review.md` and write
+4. After three review rounds without `approved`, `review-brief.mjs` refuses a fourth (exit 3): stop
+   and give the user the open findings and the screenshots.
+5. After an approved review, go through `<plugin>/shared/ratchet.md` for every Blocker: a visual
+   mistake that a script could catch (a raw colour, a missing state page, a clipped label) becomes a
+   check, not a reminder.
+6. No subagent tool here: review it yourself with `design-review.md` and write
    "Reviewer: same agent, no independent review available" under the title, and tell the user.
 
 The Stop gate blocks your first attempt to stop until the run and `.verify/review-ui.md` both name

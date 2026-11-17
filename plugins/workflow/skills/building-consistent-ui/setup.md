@@ -100,7 +100,15 @@ states, tables, navigation). Copy the numbers into design.md's UX rules. Ignore 
    first page you build creates its baseline the same way (verify.md, New pages). Write the OS or
    container used in design.md's Baselines line; Playwright adds it to snapshot names
    (`-linux`, `-darwin`), so later updates must run there too.
-9. If pages exist, run `node <plugin>/scripts/run-verify.mjs --config working` and follow `verify.md`
+9. Guardrails beyond raw styles (`<plugin>/shared/ratchet.md`, row one): lint rules for the patterns
+   agents get wrong in this stack, each with a message that says the fix. Common ones:
+   `no-restricted-imports` for the component library's primitives outside the shared parts folder,
+   `no-restricted-syntax` for `useEffect` that fetches or syncs state when the project has a data
+   layer, `setTimeout`/`requestAnimationFrame` used to wait for layout, inline `style={{…}}`. Pick
+   only those that match decisions in design.md, run them over the repo, fix or allowlist what they
+   find. Create `docs/checklist.md` with the header from `ratchet.md` and no items, and fill the ui
+   lane's `sensitive` paths with the user (checkout, sign-in, anything that takes money or deletes data).
+10. If pages exist, run `node <plugin>/scripts/run-verify.mjs --config working` and follow `verify.md`
    once end to end. If none exist, the first build does this. (`--config working` because the checks
    are not on the default branch yet. Once they are, every run reads them from the base commit, so a
    later change cannot edit the checks that judge it; a change to the checks themselves runs with

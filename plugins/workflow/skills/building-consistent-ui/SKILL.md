@@ -24,6 +24,7 @@ Third-party design skills are tools this workflow calls; they never override the
 | Asked only to review or check UI | `verify.md`, then `design-review.md` |
 | No scripted way to start the app and drive its journeys | `<plugin>/shared/ctl.md` |
 | The change also touches endpoints, jobs or schema | the `building-reliable-backend` skill for the api lane; both lanes must pass |
+| A review found a Blocker, a change was reverted, or the user corrected you | `<plugin>/shared/ratchet.md`: make it a check |
 | Project still has `.ui-verify/` (0.1) | `node <plugin>/scripts/run-verify.mjs --migrate`, then follow what it prints |
 
 ## Style change requests

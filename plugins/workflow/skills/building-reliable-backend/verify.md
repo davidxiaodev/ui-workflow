@@ -38,30 +38,34 @@ contract; propose them to the user.
 
 ## Independent review
 
-The agent that built the change does not review it. Dispatch a fresh subagent (a different model
-when one is available) with exactly this brief, and nothing about how the change was made:
+The agent that built the change does not review it. Write the brief with
 
-```text
-Review a backend change. Follow <skill>/code-review.md exactly.
-Read: docs/backend.md, .verify/acceptance.md, .verify/last-run.json (lanes.api), the diff from
-<base ref> (git diff <base ref>), and the logs it names.
-The user asked for: <the user's request, in their words>.
-Deferred findings from earlier rounds (record as "- [-]" if still present): <list with reasons, or none>.
-Write .verify/review-api.md as code-review.md shows, with "Reviewer: <your model>" and
-"Tree: <lanes.api.tree from last-run.json>" under the title.
-Do not edit any other file. Reply with the verdict and the Blocker lines.
+```bash
+node <plugin>/scripts/review-brief.mjs --lane api --request "<the user's request, in their words>"
 ```
+
+and dispatch a fresh subagent (a different model when one is available) with exactly its output,
+and nothing about how the change was made. The brief names the tree under review, sets the depth from
+the change (quick, standard, or deep for contracts, migrations, sensitive paths and changed checks,
+where Blockers must survive an attempt to disprove them), lists the `docs/checklist.md` items the diff
+triggers, and from the second round on gives the reviewer the previous findings and only the diff
+since then. Put deferred Should-fixes, one per line with the reason, in `.verify/deferred-api.md`
+before writing the brief.
 
 Then:
 
 1. Read its review. You may disagree in your final message; you may not edit its findings, its
-   acceptance marks or its verdict.
-2. Fix Blockers and the Should-fixes you take on, rerun `run-verify.mjs`, and dispatch a new fresh
-   reviewer with the same brief. Never resume the previous reviewer.
+   acceptance or checklist marks, or its verdict.
+2. Fix Blockers and the Should-fixes you take on. When a finding names a class of bug, fix every
+   instance. Rerun `run-verify.mjs`, write a new brief, and dispatch a new fresh reviewer. Never
+   resume the previous reviewer.
 3. Defer a Should-fix only with a reason the user would accept; every deferral is in your final message.
-   Blockers and unmet criteria are never deferred.
-4. After three rounds without `approved`, stop and give the user the open findings.
-5. No subagent tool: review it yourself with code-review.md, write "Reviewer: same agent, no
+   Blockers, unmet criteria and broken checklist items are never deferred.
+4. After three rounds without `approved`, `review-brief.mjs` refuses a fourth (exit 3): stop,
+   reconsider the approach, and give the user the open findings.
+5. After an approved review, go through `<plugin>/shared/ratchet.md` for every Blocker and every
+   finding the reviewer called a class: it turns them into checks so the next change cannot repeat them.
+6. No subagent tool: review it yourself with code-review.md, write "Reviewer: same agent, no
    independent review available" under the title, and tell the user.
 
 ## Evidence pack and merge tier

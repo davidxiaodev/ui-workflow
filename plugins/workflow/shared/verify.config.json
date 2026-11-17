@@ -6,6 +6,7 @@
       "files": ["<web app dir>/**/*.{tsx,jsx,vue,svelte,html,css,scss}"],
       "tokens": ["<token CSS file>"],
       "shared": ["<shared component folders, e.g. packages/ui, src/flows>"],
+      "sensitive": ["<paths where a mistake costs most, e.g. src/checkout/**, src/auth/**; always merge tier 3>"],
       "checks": [
         { "name": "raw-styles", "run": "node scripts/ui/check-raw-styles.mjs <ui source dirs>" },
         { "name": "types", "run": "<the project's typecheck command>" },
@@ -18,7 +19,8 @@
       "files": ["<api dir>/**", "<migrations dir>/**", "<contract file, e.g. openapi.yaml>"],
       "contract": ["<contract file, e.g. openapi.yaml>"],
       "migrations": ["<migrations dir>/**"],
-      "shared": ["<modules many endpoints use, e.g. src/auth, src/db>"],
+      "shared": ["<modules many endpoints use, e.g. src/db, src/lib>"],
+      "sensitive": ["<auth, billing, permissions, data deletion, e.g. src/auth/**, src/billing/**; always merge tier 3>"],
       "checks": [
         { "name": "types", "run": "<typecheck or compile>" },
         { "name": "lint", "run": "<the project's linter>" },
