@@ -65,7 +65,8 @@ cannot loop forever; ending that way means your final message must say the UI is
 People read evidence instead of code. After the review, run
 `node <plugin>/scripts/make-evidence.mjs` (add `--pr` when you will open a pull request). It writes `<runDir>/evidence.md`: the merge tier,
 the checks, before/after screenshots per page and width, recordings, the verdict, open and deferred
-findings and what was not checked. The Stop gate requires it and requires it newer than the review.
+findings, what was not checked, and the merge danger (door, blast radius, how to revert). The Stop
+gate requires it for the tree on disk, written after the review.
 
 | Tier | When | Who must look |
 | --- | --- | --- |

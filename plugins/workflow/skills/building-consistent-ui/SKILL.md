@@ -73,8 +73,9 @@ A tool missing: say which, continue with this skill's own checks, never pretend 
 
 ## Done means
 
-`run-verify.mjs` printed `pass` for every lane the change touched, `.verify/review-ui.md` (written
-with `design-review.md` by a fresh reviewer) is newer than that run, has no open line, marks every
-acceptance id from `.verify/acceptance.md` and says `Verdict: approved`, `make-evidence.mjs` wrote
-the evidence pack after it, and your final message starts with the evidence path and the merge tier,
+`run-verify.mjs` printed `pass` for every lane the change touched, on the content now on disk;
+`.verify/review-ui.md` (written by a fresh reviewer from the `review-brief.mjs` brief, with
+`design-review.md`) names that same tree, has no open line, marks every acceptance id from
+`.verify/acceptance.md` and every triggered checklist item, and says `Verdict: approved`;
+`make-evidence.mjs` wrote the evidence pack after it, for the same tree; and your final message starts with the evidence path and the merge tier,
 then lists the follow-ups, the criteria not checked and what could not be checked.
