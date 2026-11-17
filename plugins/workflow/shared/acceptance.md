@@ -62,6 +62,8 @@ to prevent.
 # Acceptance: <the change, one line>
 Request: <the user's words, or a link to the issue>
 Lanes: <ui, api>
+Revert: <optional: how to undo it if it is more than reverting the commit (a flag to turn off, data to restore)>
+Door: <optional: "one-way: <why>" when it cannot be undone (an email sent, a third party called); migrations and contracts are detected>
 
 ## Criteria
 - A1 <observable result for a given input or action> · proof: <test name, journey, page, query>

@@ -25,6 +25,7 @@ the contract. `<skill>` is this skill's folder; `<plugin>` is two levels up (it 
 | Asked only to review a change | `verify.md` (dispatch), then `code-review.md` |
 | No scripted way to start the app and drive requests | `<plugin>/shared/ctl.md` |
 | The change also touches screens | the `building-consistent-ui` skill for the ui lane; both lanes must pass |
+| A review found a Blocker, a change was reverted, or the user corrected you | `<plugin>/shared/ratchet.md`: make it a check |
 
 ## Contract changes
 

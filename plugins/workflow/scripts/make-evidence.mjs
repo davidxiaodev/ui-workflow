@@ -7,6 +7,9 @@
 //   node make-evidence.mjs [--root <project root>] [--pr]
 //
 // --pr also prints a pull request body (text only) to stdout.
+// --checks-only is for CI, where no independent review ran: the tier comes from the machine checks
+// and what changed, the reviews and acceptance are left out, the pack is printed to stdout (for
+// $GITHUB_STEP_SUMMARY), and --exit-code makes the exit 1 when the tier is "not ready".
 //
 // "The change" is everything that differs from the base commit (the merge-base with the default
 // branch, or VERIFY_BASE): commits on this branch, staged, unstaged and untracked files, deletions.
@@ -35,6 +38,7 @@ const args = process.argv.slice(2);
 const rootArg = args.indexOf("--root");
 const root = resolve(rootArg === -1 ? process.cwd() : args[rootArg + 1]);
 const wantPr = args.includes("--pr");
+const checksOnly = args.includes("--checks-only");
 const cfg = loadConfig(root);
 const last = cfg && readJson(join(cfg.dir, "last-run.json"));
 if (!cfg || !last?.lanes) {
@@ -57,7 +61,7 @@ let lanes = cfg.lanes.filter((l) => touched.some((f) => inLane(l, f)));
 if (lanes.length === 0) lanes = cfg.lanes.filter((l) => last.lanes[l.name]);
 
 // Reviews, one per lane.
-const reviews = lanes.map((lane) => {
+const reviews = (checksOnly ? [] : lanes).map((lane) => {
   const path = join(cfg.dir, `review-${lane.name}.md`);
   const text = existsSync(path) ? readFileSync(path, "utf8") : "";
   const lines = text.split("\n");
@@ -71,6 +75,7 @@ const reviews = lanes.map((lane) => {
     notChecked: /^Not checked:\s*(.+)$/im.exec(text)?.[1].trim() ?? "not stated",
     open: lines.filter(OPEN_LINE),
     deferred: lines.filter((l) => /^\s*-\s*\[-\]/.test(l) && !acceptanceLines(text).includes(l)),
+    preexisting: lines.filter((l) => /^\s*-\s*Pre-existing\b/i.test(l)),
     acceptance: acceptanceLines(text),
   };
 });
@@ -91,6 +96,7 @@ const isUnder = (f, globs) => matchAny(globs, f);
 const contractChanges = touched.filter((f) => lanes.some((l) => isUnder(f, contractPaths(l))));
 const baselineChanges = touched.filter((f) => /-snapshots\/.+\.png$/.test(f));
 const sharedChanges = touched.filter((f) => lanes.some((l) => isUnder(f, l.shared ?? [])));
+const sensitiveChanges = touched.filter((f) => lanes.some((l) => isUnder(f, l.sensitive ?? [])));
 const negativeSkips = lanes.flatMap((l) => (last.lanes[l.name]?.checks ?? []).filter((c) => /no test changed/.test(c.note ?? "")).map((c) => `${l.name}/${c.name}`));
 const notChecked = criteria.filter((c) => c.status === "not checked").map((c) => c.id);
 
@@ -101,7 +107,7 @@ const reviewsReady = reviews.every((r) => /^approved\b/i.test(r.verdict) && r.op
 const sameTree = staleRuns.length === 0 && staleReviews.length === 0;
 const guard3 = guarded.filter((g) => g.tier === 3);
 const guard2 = guarded.filter((g) => g.tier === 2);
-const acceptanceReady = criteria.length > 0 && criteria.every((c) => c.status === "met" || c.status === "not checked");
+const acceptanceReady = checksOnly || (criteria.length > 0 && criteria.every((c) => c.status === "met" || c.status === "not checked"));
 const why2 = [
   baselineChanges.length && "screenshot baselines changed",
   sharedChanges.length && "shared parts changed",
@@ -111,6 +117,7 @@ const why2 = [
 ].filter(Boolean);
 const why3 = [
   contractChanges.length && "a contract changed (design, API, data or migrations)",
+  sensitiveChanges.length && `a sensitive path changed (${sensitiveChanges.join(", ")})`,
   guard3.length && `the checks themselves changed (${[...new Set(guard3.map((g) => `${g.path}: ${g.why}`))].join("; ")})`,
 ].filter(Boolean);
 const notReady = [
@@ -126,6 +133,30 @@ const tier = notReady.length
     : why2.length
       ? { id: "2", rule: `Look before merge: ${why2.join("; ")}.` }
       : { id: "1", rule: "Verified and contained. A glance at this page is enough to merge." };
+
+if (checksOnly) tier.rule = `${tier.rule} (Checks only: no independent review ran here.)`;
+
+// Merge danger: can it be undone, and how far does it reach.
+const migrationChanges = touched.filter((f) => lanes.some((l) => isUnder(f, l.migrations ?? [])));
+const apiContractChanges = touched.filter((f) => lanes.some((l) => isUnder(f, l.contract ?? [])));
+const field = (name) => {
+  const v = new RegExp(`^${name}:\\s*(.+)$`, "im").exec(acceptanceText)?.[1].trim();
+  return v && !v.startsWith("<") ? v : undefined; // an unfilled template placeholder is no answer
+};
+const door = migrationChanges.length
+  ? `one-way: a migration changes stored data (${migrationChanges.join(", ")})`
+  : apiContractChanges.length
+    ? `one-way for callers already using the new contract (${apiContractChanges.join(", ")})`
+    : field("Door") ?? "two-way: reverting the commit restores the previous behaviour";
+const reach = [
+  sensitiveChanges.length && `sensitive paths (${sensitiveChanges.length})`,
+  contractChanges.length && `contracts (${contractChanges.length})`,
+  sharedChanges.length && `shared parts (${sharedChanges.length})`,
+  guarded.length && `the checks (${guarded.length})`,
+].filter(Boolean);
+const blast = reach.length ? `wide: ${reach.join(", ")}` : `contained: ${touched.length} file(s) in ${lanes.map((l) => l.name).join(", ") || "no lane"}`;
+const revert = field("Revert") ?? (migrationChanges.length ? "revert the commit and run the down migration first; check what data the up migration already changed" : "revert the commit");
+const danger = [`- Door: ${door}`, `- Blast radius: ${blast}`, `- How to revert: ${revert}`];
 
 // Screenshots from the ui lanes' run folders.
 const uiDirs = [...new Set(lanes.filter((l) => l.kind === "ui").map((l) => last.lanes[l.name]?.runDir).filter(Boolean))];
@@ -162,8 +193,10 @@ md.push(`- Baselines changed: ${list(baselineChanges)}`);
 md.push(`- Shared parts changed: ${list(sharedChanges)}`);
 for (const r of reviews) md.push(`- Not checked (${r.lane.name}): ${r.notChecked}`);
 md.push("");
+md.push("## Merge danger", "", ...danger, "");
 md.push("## Acceptance: verified by the independent reviewers", "");
-if (criteria.length === 0) md.push("- no .verify/acceptance.md criteria", "");
+if (checksOnly) md.push("- not part of a checks-only run", "");
+else if (criteria.length === 0) md.push("- no .verify/acceptance.md criteria", "");
 else {
   md.push("| Id | Criterion | Status | Reviewer's evidence |", "| --- | --- | --- | --- |");
   for (const c of criteria) md.push(`| ${c.id} | ${cell(c.text)} | ${c.status} | ${cell(c.found.map((f) => `${f.lane}: ${f.line.replace(/^-\s*\[[ x-]\]\s*/, "")}`).join("<br>") || "—")} |`);
@@ -177,7 +210,7 @@ for (const l of lanes) {
     continue;
   }
   md.push(`- **${l.name}: ${run.result}** (${run.finishedAt})`);
-  for (const c of run.checks) md.push(`  - ${c.name}: ${c.exitCode === 0 ? "pass" : `FAIL (exit ${c.exitCode})`}${c.note ? ` · ${c.note}` : ""} · [log](${rel(c.log)})`);
+  for (const c of run.checks) md.push(`  - ${c.name}: ${c.skipped ? "skipped" : c.exitCode === 0 ? "pass" : `FAIL (exit ${c.exitCode})`}${c.note ? ` · ${c.note}` : ""}${c.log ? ` · [log](${rel(c.log)})` : ""}`);
 }
 md.push("");
 if (pages.size) {
@@ -197,10 +230,17 @@ if (uiDirs.length || recordings.length) {
 if (traces.length) md.push("## Traces", "", ...traces.map((t) => `- [${rel(t)}](${rel(t)}) (open with \`npx playwright show-trace\`)`), "");
 const findings = reviews.flatMap((r) => [...r.open, ...r.deferred].map((l) => `${l} (${r.lane.name})`));
 md.push("## Open and deferred findings", "", ...(findings.length ? findings : ["- none"]), "");
+const preexisting = reviews.flatMap((r) => r.preexisting.map((l) => `${l} (${r.lane.name})`));
+if (preexisting.length) md.push("## Pre-existing problems found on the way (not this change's; file them)", "", ...preexisting, "");
 
 const evidencePath = join(runDir, "evidence.md");
 writeFileSync(evidencePath, md.join("\n"));
 console.error(`make-evidence: ${evidencePath} (tier ${tier.id}, ${criteria.length} criteria, ${pages.size} page(s), ${recordings.length} recording(s))`);
+
+if (checksOnly) {
+  process.stdout.write(md.join("\n") + "\n");
+  if (args.includes("--exit-code") && tier.id === "not ready") process.exit(1);
+}
 
 if (wantPr) {
   const deferred = reviews.flatMap((r) => r.deferred.map((d) => `  ${d.trim()} (${r.lane.name})`));
@@ -208,6 +248,9 @@ if (wantPr) {
     "## Evidence",
     "",
     `**Merge tier: ${tier.id}.** ${tier.rule}`,
+    "",
+    "### Merge danger",
+    ...danger,
     "",
     "### Acceptance (independently verified)",
     ...(criteria.length ? criteria.map((c) => `- ${c.status === "met" ? "[x]" : c.status === "not checked" ? "[-]" : "[ ]"} ${c.id} ${c.text} — ${c.status}`) : ["- none"]),
