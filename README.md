@@ -28,12 +28,30 @@
 | --- | --- | --- |
 | 1 | 检查全过、评审通过、验收标准全部满足，且没有下面的情况 | 扫一眼证据包即可合并 |
 | 2 | 改了截图基线或共享模块；有验收标准"未验证"；改了源码却没改测试 | 你要看前后对比和标出来的部分 |
-| 3 | 改了设计约定、后端约定、接口契约或迁移 | 你确认之后才能合并 |
-| 未就绪 | 检查失败、评审未通过、有验收标准未满足或没被评审 | 不合并 |
+| 3 | 改了设计约定、后端约定、接口契约或迁移；或者**改了检查本身**（见下） | 你确认之后才能合并 |
+| 未就绪 | 检查失败、评审未通过、有验收标准未满足或没被评审；或者运行、评审对应的不是当前磁盘上的内容 | 不合并 |
 
-**收尾检查**：Stop 钩子。有 lane 的文件被改了，但这条 lane 的 `run-verify` 没通过、独立评审缺失、过期或未通过，
-验收标准没有全部在评审里标记，或者证据包比评审旧，第一次结束会被拦下；仍未通过就结束时，AI 必须写明"未验证"
-（钩子只拦一次，避免无限循环）。关闭：环境变量 `UI_WORKFLOW_GATE=off`。
+另外，代码里新增了 `@ts-ignore`、`eslint-disable`、`noqa` 这类"关掉检查"的注释，或者加了重试，至少是 2 档。
+
+**改动不能改判它的检查**：检查一律从基线提交（和默认分支的 merge-base，可用 `VERIFY_BASE` 指定）上的
+`.verify/config.json` 读取，工作区里改过的配置不生效。确实要改检查的改动（接新检查、调整 lane）用
+`run-verify.mjs --config working` 跑，但这类改动固定是 3 档。算作"改了检查本身"的有：`.verify/config.json`；
+测试、lint、类型和 CI 的配置（`playwright.config.*`、`eslint.config.*`、`tsconfig*.json`、`.github/workflows/**`、
+`.claude/settings.json` 等，完整清单见 `scripts/lib/verify-config.mjs` 的 `DEFAULT_GUARD`，项目可以在配置的 `guard`
+里追加）；删掉的测试文件；测试里新增的 `.skip`、`.only`、`xit`、`@pytest.mark.skip`，以及截图对比的 `threshold`、
+`maxDiffPixels`、`mask`。
+
+**按内容认，不按时间认**：`run-verify` 记录工作区内容的哈希（`tree`，不含 `.verify/` 和被 `.gitignore` 忽略的文件），
+评审在标题下写 `Tree: <这个哈希>`，证据包也写上它。收尾检查和分档只认哈希对得上的运行和评审；`touch`、`checkout`
+或者评审之后再改文件，都骗不过去。运行期间如果有检查改写了源码（比如格式化工具开了写入模式），这次运行直接判失败。
+
+**收尾检查**：Stop 钩子。这一轮改动了某条 lane 的文件（和基线提交相比，已提交、未提交、删除都算；内容和这一轮开始时
+不同，由 UserPromptSubmit 钩子记录），而这条 lane 的 `run-verify` 没通过或对应的不是当前内容，独立评审缺失、未通过
+或对应的不是当前内容，验收标准没有全部在评审里标记，或者证据包不是当前内容的，第一次结束会被拦下；仍未通过就结束时，
+AI 必须写明"未验证"（钩子只拦一次，避免无限循环）。只聊天、没改内容的一轮不会被拦。
+
+`UI_WORKFLOW_GATE`：`enforce`（默认，拦截）、`observe`（只记录本来会拦什么，用来先看误报）、`off`（关闭）。
+每次判断都追加到 `.verify/gate.log`。
 
 ## 安装
 
@@ -61,6 +79,13 @@ baoyu-design 是可选的看图调色工具，只在项目仓库外用（它含�
 两者都会写约定文件、接好 `.verify/config.json`，没有可脚本化的用户路径时生成 `ctl` 控制命令，最后在未改动的代码上跑一遍全部检查。
 之后正常让 Claude 改代码即可。
 
+### 从 0.2 升级
+
+- 评审文件要在标题下多写一行 `Tree: <last-run.json 里这条 lane 的 tree>`，没有这一行收尾检查不放行。
+  按新的 `verify.md` 派评审即可，brief 里已经写了。
+- 检查改为从基线提交读配置。如果 `.verify/config.json` 还没合进默认分支，先用 `run-verify.mjs --config working`。
+- Stop 钩子现在也会检查这一轮里已经提交的改动。
+
 ### 从 0.1 升级
 
 0.1 用的是 `.ui-verify/`。在项目里运行 `node <plugin>/scripts/run-verify.mjs --migrate`，它会把目录改成 `.verify/`、
@@ -78,6 +103,9 @@ baoyu-design 是可选的看图调色工具，只在项目仓库外用（它含�
 | `plugins/workflow/scripts/run-verify.mjs` | 按 lane 跑检查（含内置负向检查），按真实退出码记录；`--restore`、`--migrate` |
 | `plugins/workflow/scripts/make-evidence.mjs` | 生成证据包：合并分档、验收标准、机器检查、前后对比截图、录屏；`--pr` 输出 PR 描述 |
 | `plugins/workflow/scripts/stop-gate.mjs` | Stop 钩子 |
+| `plugins/workflow/scripts/turn-start.mjs` | UserPromptSubmit 钩子：记录这一轮开始时的内容哈希 |
+| `plugins/workflow/scripts/lib/verify-config.mjs` | 读配置（从基线提交）、算改动范围和内容哈希、找出"改了检查本身"的改动 |
+| `test/` | 这些脚本自己的测试：`npm test`（Node 20+，无依赖），CI 见 `.github/workflows/test.yml` |
 | `plugins/workflow/scripts/check-raw-styles.mjs` | 找出写死的颜色、Tailwind 色板类、任意值 |
 | `plugins/workflow/scripts/find-tools.mjs` | 找到已安装的 taste-skill、ui-ux-pro-max、baoyu-design |
 | `docs/adr/` | 关键取舍的决策记录 |

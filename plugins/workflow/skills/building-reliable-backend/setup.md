@@ -65,5 +65,8 @@ skill, and API journeys that call the running app and check the rows.
    never invent one. `negative.test` runs the lane's unit and integration tests in one command, from
    the repo root. Set top-level `tests` if this repo's test files live elsewhere.
 5. `.gitignore`: `.verify/*` and `!.verify/config.json`.
-6. Run `node <plugin>/scripts/run-verify.mjs --lane api`. Every check must pass on the unchanged
-   code; fix the setup, or tell the user which check is red before any change and why.
+6. Run `node <plugin>/scripts/run-verify.mjs --lane api --config working`. Every check must pass on
+   the unchanged code; fix the setup, or tell the user which check is red before any change and why.
+   (`--config working` because the checks are not on the default branch yet. Once they are, every run
+   reads them from the base commit, so a later change cannot edit the checks that judge it; a change
+   to the checks themselves runs with `--config working` and is merge tier 3.)

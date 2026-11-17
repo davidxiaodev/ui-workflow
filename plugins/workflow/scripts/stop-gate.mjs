@@ -1,52 +1,71 @@
 #!/usr/bin/env node
-// Claude Code Stop hook. In a project with .verify/config.json it blocks the end of a turn when
-// files of a lane (ui, api, …) changed and that lane is not verified: its last run-verify did not
-// pass after the change, its independent review is missing, stale, open or not approved, the
-// acceptance criteria are missing or not all accounted for in a review, or the evidence pack is
-// older than the reviews. It blocks once per stop (stop_hook_active lets the second attempt through,
-// so a turn cannot loop forever). Set UI_WORKFLOW_GATE=off to disable it.
-import { existsSync, readFileSync, statSync } from "node:fs";
+// Claude Code Stop hook. In a project with .verify/config.json it blocks the end of a turn that
+// changed files of a lane (ui, api, …) when that lane is not verified for exactly the content on
+// disk now:
+//   - its last run-verify did not pass, or ran on a different tree (content hash, not file times);
+//   - its independent review is missing, open, not approved, or names a different tree;
+//   - the acceptance criteria are missing or not all accounted for in a review;
+//   - the evidence pack is missing, names a different tree, or is older than a review.
+// "Changed" means: the files differ from the base commit (committed on this branch or not, deletions
+// included), and the tree differs from the one recorded when the turn started (turn-start.mjs), so a
+// turn that only talked is not stopped.
+//
+// It blocks once per stop (stop_hook_active lets the second attempt through, so a turn cannot loop
+// forever). UI_WORKFLOW_GATE: "enforce" (default) blocks; "observe" only logs what it would have
+// blocked; "off" does nothing. Every decision is appended to .verify/gate.log.
+import { appendFileSync, existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import {
   acceptanceIds,
   acceptanceLines,
+  changedSince,
   gitRoot,
   inLane,
   legacyConfigExists,
   loadConfig,
   OPEN_LINE,
   readJson,
+  treeHash,
   workingChanges,
 } from "./lib/verify-config.mjs";
 
+const mode = (process.env.UI_WORKFLOW_GATE ?? "enforce").toLowerCase();
 const input = readStdin();
-if (process.env.UI_WORKFLOW_GATE === "off" || input.stop_hook_active) process.exit(0);
+if (mode === "off") process.exit(0);
 
 const root = gitRoot(input.cwd ?? process.cwd());
 if (!root) process.exit(0);
 
-const changed = workingChanges(root);
 if (legacyConfigExists(root)) {
-  const ui = changed.filter((f) => /\.(tsx|jsx|vue|svelte|html|css|scss)$/.test(f));
-  if (ui.length) block([`UI files changed (${preview(ui)}) in a project still set up for ui-workflow 0.1 (.ui-verify/).`, "Run `node <plugin>/scripts/run-verify.mjs --migrate`, follow what it prints, then verify as the skill says."]);
+  const ui = workingChanges(root).filter((f) => /\.(tsx|jsx|vue|svelte|html|css|scss)$/.test(f));
+  if (ui.length && !input.stop_hook_active) {
+    block([`UI files changed (${preview(ui)}) in a project still set up for ui-workflow 0.1 (.ui-verify/).`, "Run `node <plugin>/scripts/run-verify.mjs --migrate`, follow what it prints, then verify as the skill says."]);
+  }
   process.exit(0);
 }
 
 const cfg = loadConfig(root);
 if (!cfg) process.exit(0);
 
+const changes = changedSince(root, cfg.base);
 const required = cfg.lanes
-  .map((lane) => ({ lane, files: changed.filter((f) => inLane(lane, f)) }))
+  .map((lane) => ({ lane, files: changes.filter((c) => inLane(lane, c.path)).map((c) => c.path) }))
   .filter((x) => x.files.length);
 if (required.length === 0) process.exit(0);
+
+const current = treeHash(root);
+const turn = readJson(join(cfg.dir, "turn.json"));
+if (current && turn?.tree === current) process.exit(0); // this turn changed nothing
 
 const last = readJson(join(cfg.dir, "last-run.json"));
 const problems = [];
 const reviewTimes = [];
 const coveredIds = new Set();
+const short = (h) => (h ? h.slice(0, 12) : "none");
+
+if (!current) problems.push("could not hash the working tree (git failed); verification cannot be matched to the content.");
 
 for (const { lane, files } of required) {
-  const newest = Math.max(...files.map((f) => statSync(join(root, f)).mtimeMs));
   const run = last?.lanes?.[lane.name];
   const reviewPath = join(cfg.dir, `review-${lane.name}.md`);
   const label = `lane ${lane.name} (${preview(files)})`;
@@ -54,17 +73,17 @@ for (const { lane, files } of required) {
     problems.push(`${label}: run-verify has not run this lane.`);
     continue;
   }
-  const finished = Date.parse(run.finishedAt);
   if (run.result !== "pass") problems.push(`${label}: the last run-verify result is "${run.result}", not "pass".`);
-  if (finished < newest) problems.push(`${label}: files changed after the last run-verify.`);
+  if (run.tree !== current) problems.push(`${label}: files changed since the last run-verify (it checked tree ${short(run.tree)}, the tree is now ${short(current)}).`);
   if (!existsSync(reviewPath)) {
     problems.push(`${label}: .verify/review-${lane.name}.md is missing (independent review).`);
     continue;
   }
   const review = readFileSync(reviewPath, "utf8");
-  const reviewTime = statSync(reviewPath).mtimeMs;
-  reviewTimes.push(reviewTime);
-  if (reviewTime < finished) problems.push(`${label}: its review is older than the last run-verify.`);
+  reviewTimes.push(statSync(reviewPath).mtimeMs);
+  const reviewed = reviewTree(review);
+  if (!reviewed) problems.push(`${label}: its review has no "Tree:" line naming the tree it reviewed (lanes.${lane.name}.tree in last-run.json).`);
+  else if (current && !current.startsWith(reviewed)) problems.push(`${label}: its review is of tree ${short(reviewed)}, not the current tree ${short(current)}.`);
   const open = review.split("\n").filter(OPEN_LINE);
   if (open.length) problems.push(`${label}: its review still has ${open.length} open or failing line(s).`);
   if (!/^Verdict:\s*approved\b/im.test(review)) problems.push(`${label}: its review does not say "Verdict: approved".`);
@@ -82,15 +101,46 @@ else {
 
 const evidencePath = last?.runDir ? join(last.runDir, "evidence.md") : "";
 if (!evidencePath || !existsSync(evidencePath)) problems.push("the evidence pack is missing: run make-evidence.mjs after the reviews.");
-else if (reviewTimes.some((t) => statSync(evidencePath).mtimeMs < t)) problems.push("the evidence pack is older than a review: run make-evidence.mjs again.");
+else {
+  const evidenceTree = /^Tree:\s*([0-9a-f]+)/im.exec(readFileSync(evidencePath, "utf8"))?.[1];
+  if (evidenceTree !== current) problems.push("the evidence pack is of another tree: run make-evidence.mjs again.");
+  if (reviewTimes.some((t) => statSync(evidencePath).mtimeMs < t)) problems.push("the evidence pack is older than a review: run make-evidence.mjs again.");
+}
 
-if (problems.length === 0) process.exit(0);
+if (problems.length === 0) {
+  log("pass", []);
+  process.exit(0);
+}
+if (input.stop_hook_active) {
+  log("let-through-unverified", problems);
+  process.exit(0);
+}
+if (mode === "observe") {
+  log("would-block", problems);
+  process.exit(0);
+}
+log("block", problems);
 block([
   "Changes are not verified:",
   ...problems.map((p) => `- ${p}`),
-  "Follow the lane's skill (ui: building-consistent-ui verify.md; api: building-reliable-backend verify.md): run run-verify.mjs, get an independent review written to .verify/review-<lane>.md that accounts for every acceptance criterion, then run make-evidence.mjs.",
+  "Follow the lane's skill (ui: building-consistent-ui verify.md; api: building-reliable-backend verify.md): run run-verify.mjs, get an independent review written to .verify/review-<lane>.md that names the run's tree and accounts for every acceptance criterion, then run make-evidence.mjs.",
   "If you cannot verify (no browser, no database, server will not start), say so plainly to the user instead of claiming the work is done.",
 ]);
+
+function reviewTree(text) {
+  return /^Tree:\s*([0-9a-f]{7,40})\b/im.exec(text)?.[1] ?? null;
+}
+
+function log(decision, list) {
+  try {
+    appendFileSync(
+      join(cfg.dir, "gate.log"),
+      JSON.stringify({ at: new Date().toISOString(), mode, decision, tree: current, session: input.session_id ?? null, problems: list }) + "\n",
+    );
+  } catch {
+    // logging never decides anything
+  }
+}
 
 function block(lines) {
   process.stdout.write(JSON.stringify({ decision: "block", reason: lines.join("\n") }) + "\n");

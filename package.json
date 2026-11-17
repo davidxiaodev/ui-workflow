@@ -1,0 +1,12 @@
+{
+  "name": "ui-workflow-dev",
+  "private": true,
+  "type": "module",
+  "description": "Tests for the ui-workflow plugin's scripts. The plugin itself has no dependencies.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
+}

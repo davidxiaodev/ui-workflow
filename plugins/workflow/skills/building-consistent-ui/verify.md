@@ -36,8 +36,8 @@ The user asked for: <the user's request, in their words>.
 Scope: <pages and widths the change touched, plus pages sharing a changed part>.
 Deferred Should-fixes (record as "- [-]" follow-ups if still present): <list with reasons, or none>.
 Baselines updated in this change (copy into the review): <page-width: what and why, or none>.
-Write .verify/review-ui.md as design-review.md step 5 shows, with "Reviewer: <your model>" under
-the title. Do not edit any other file. Reply with the verdict and the Blocker lines.
+Write .verify/review-ui.md as design-review.md step 5 shows, with "Reviewer: <your model>" and
+"Tree: <lanes.ui.tree from last-run.json>" under the title. Do not edit any other file. Reply with the verdict and the Blocker lines.
 ```
 
 Then:
@@ -53,8 +53,9 @@ Then:
 5. No subagent tool here: review it yourself with `design-review.md` and write
    "Reviewer: same agent, no independent review available" under the title, and tell the user.
 
-The Stop gate blocks your first attempt to stop until `.verify/review-ui.md` is newer than the run,
-has no open `- [ ]` line, accounts for every acceptance id, and says `Verdict: approved`. It lets the second attempt through so a turn
+The Stop gate blocks your first attempt to stop until the run and `.verify/review-ui.md` both name
+the tree now on disk (a content hash, not file times), the review has no open `- [ ]` line,
+accounts for every acceptance id, and says `Verdict: approved`. It lets the second attempt through so a turn
 cannot loop forever; ending that way means your final message must say the UI is not verified.
 
 ## Evidence pack and merge tier
@@ -67,9 +68,9 @@ findings and what was not checked. The Stop gate requires it and requires it new
 | Tier | When | Who must look |
 | --- | --- | --- |
 | 1 | checks pass, review approved, every criterion met, nothing below | a glance at evidence.md is enough to merge |
-| 2 | baselines updated, a shared part changed (`shared` in config), or a criterion "not checked" | the user looks at every before/after pair and the unchecked criteria |
-| 3 | `docs/design.md` or a token file changed (`tokens` in config), or an api contract or migration | the user confirms the contract change before merge |
-| not ready | checks failed, review not approved, a criterion not met or not reviewed | nobody merges |
+| 2 | baselines updated, a shared part changed (`shared` in config), a criterion "not checked", or a check silenced in the code (`@ts-ignore`, `eslint-disable`) | the user looks at every before/after pair and the unchecked criteria |
+| 3 | `docs/design.md` or a token file changed (`tokens` in config), or an api contract or migration; or the checks themselves changed: `.verify/config.json`, `playwright.config.*`, the look tests, lint or CI config, a deleted test, a test that skips, masks or loosens a comparison | the user confirms before merge |
+| not ready | checks failed, review not approved, a criterion not met or not reviewed, or the run or the review is of a different tree than the one on disk | nobody merges |
 
 The tier is computed, never chosen. When you open a pull request, put the `--pr` output at the top
 of its body, and attach the screenshots and recordings (or link the CI artifact of the run folder).

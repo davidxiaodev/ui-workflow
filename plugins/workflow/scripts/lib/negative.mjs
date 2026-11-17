@@ -5,10 +5,10 @@
 //
 // It edits the working tree in place, so it backs every file up first, restores in a finally block,
 // and refuses to start while an older backup exists (a crashed run): `run-verify.mjs --restore`.
-import { execFileSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { gitLines, inLane, matchAny } from "./verify-config.mjs";
+import { changedSince, gitShow, inLane, matchAny, resolveBase } from "./verify-config.mjs";
 
 const BACKUP = "negative-backup";
 
@@ -45,7 +45,7 @@ export function runNegative({ root, dir, lane, tests, spec, timeoutMs, env }) {
     };
   }
 
-  const base = resolveBase(root, spec.base);
+  const base = spec.base ? resolveBase(root, spec.base) : resolveBase(root);
   if (!base) return { exitCode: 2, note: "no base commit to compare with (no commits yet?)", log: "" };
   const changed = changedSince(root, base).filter((c) => inLane(lane, c.path));
   const isTest = (p) => matchAny(spec.tests ?? tests, p);
@@ -87,7 +87,7 @@ export function runNegative({ root, dir, lane, tests, spec, timeoutMs, env }) {
       }
       manifest.files.push({ path: s.path, existed });
       writeFileSync(join(backupDir, "manifest.json"), JSON.stringify(manifest, null, 2));
-      const old = baseContent(root, base, s.path);
+      const old = gitShow(root, base, s.path, { buffer: true });
       if (old === null) {
         if (existed) unlinkSync(target);
       } else {
@@ -112,32 +112,4 @@ export function runNegative({ root, dir, lane, tests, spec, timeoutMs, env }) {
     note: `tests failed without the change (exit ${reverted}); the reviewer reads the log to see they failed on an assertion, not only on a missing import`,
     log: log.join("\n"),
   };
-}
-
-function resolveBase(root, wanted) {
-  const candidates = wanted ? [wanted] : ["origin/HEAD", "origin/main", "origin/master"];
-  for (const ref of candidates) {
-    const mb = gitLines(root, ["merge-base", "HEAD", ref])[0];
-    if (mb) return mb;
-  }
-  return gitLines(root, ["rev-parse", "HEAD"])[0] ?? null;
-}
-
-/** Files that differ between base and the working tree, including untracked ones. */
-function changedSince(root, base) {
-  const out = new Map();
-  for (const line of gitLines(root, ["diff", "--name-status", "--no-renames", base])) {
-    const [status, path] = line.split("\t");
-    out.set(path, { path, status });
-  }
-  for (const path of gitLines(root, ["ls-files", "--others", "--exclude-standard"])) out.set(path, { path, status: "A" });
-  return [...out.values()];
-}
-
-function baseContent(root, base, path) {
-  try {
-    return execFileSync("git", ["show", `${base}:${path}`], { cwd: root, maxBuffer: 64 << 20, stdio: ["ignore", "pipe", "ignore"] });
-  } catch {
-    return null;
-  }
 }
