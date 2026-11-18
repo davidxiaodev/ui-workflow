@@ -79,7 +79,7 @@ export function node(script, args = [], { cwd, input, env = {} } = {}) {
     cwd,
     input: input === undefined ? "" : typeof input === "string" ? input : JSON.stringify(input),
     encoding: "utf8",
-    env: { ...process.env, ...GIT_ENV, VERIFY_BASE: "", DX_WORKFLOW_GATE: "", ...env },
+    env: { ...process.env, ...GIT_ENV, VERIFY_BASE: "", DX_WORKFLOW_GATE: "", CI: "", ...env }, // tests set CI themselves; GitHub Actions sets it everywhere
   });
   return { code: r.status, stdout: r.stdout, stderr: r.stderr };
 }
