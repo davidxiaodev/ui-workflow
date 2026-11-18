@@ -1,5 +1,5 @@
 {
-  "lane": "api",
+  "lane": "backend",
   "kind": "bug",
   "request": "Add GET /orders/:id so a signed-in customer can see one of their orders.",
   "acceptance": [

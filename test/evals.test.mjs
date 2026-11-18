@@ -23,7 +23,7 @@ describe("reviewer evals", () => {
     const bug = prepare("idor-order-lookup");
     dirs.push(dirname(bug.root));
     const c = loadCase("idor-order-lookup");
-    const review = (line) => writeFileSync(join(bug.root, ".verify/review-api.md"), `# Review\nTree: abcdef1234567\n\n## Findings\n${line}\n\nVerdict: changes required\n`);
+    const review = (line) => writeFileSync(join(bug.root, ".verify/review-backend.md"), `# Review\nTree: abcdef1234567\n\n## Findings\n${line}\n\nVerdict: changes required\n`);
     review("- [ ] Blocker · src/routes.mjs:6 · Auth: orders.get is not scoped to req.user, so another customer's order is returned → GET /orders/2 as c1 → filter by customerId");
     assert.deepEqual({ found: score(bug.root, c).found, severity: score(bug.root, c).severity }, { found: true, severity: "Blocker" });
     review("- [ ] Should-fix · src/routes.mjs:1 · security could be better");
@@ -31,7 +31,7 @@ describe("reviewer evals", () => {
 
     const clean = prepare("clean-rename-with-tests");
     dirs.push(dirname(clean.root));
-    writeFileSync(join(clean.root, ".verify/review-api.md"), "# Review\nTree: abcdef1234567\n\n## Findings\n- [ ] Blocker · src/total.mjs:1 · rename breaks callers\n\nVerdict: changes required\n");
+    writeFileSync(join(clean.root, ".verify/review-backend.md"), "# Review\nTree: abcdef1234567\n\n## Findings\n- [ ] Blocker · src/total.mjs:1 · rename breaks callers\n\nVerdict: changes required\n");
     const s = score(clean.root, loadCase("clean-rename-with-tests"));
     assert.equal(s.falsePositives, 1);
     assert.equal(s.approved, false);

@@ -1,5 +1,5 @@
 {
-  "note": "Third-party tools ui-workflow calls or adapted from. Upgrade one at a time: read its diff, rerun run-verify on two projects, then bump the commit here.",
+  "note": "Third-party tools dx-workflow calls or adapted from. Upgrade one at a time: read its diff, rerun run-verify on two projects, then bump the commit here.",
   "called": {
     "taste-skill": {
       "repo": "https://github.com/Leonxlnx/taste-skill",
@@ -38,7 +38,7 @@
       "commit": "4dd1d05818d19792e7cd6e818f1667f95f7e1dbe",
       "license": "MIT, Copyright (c) 2026 Lauren Tan",
       "into": [
-        "skills/building-consistent-ui/verify.md",
+        "skills/frontend/verify.md",
         "shared/ctl.md (was functional-verify.md)"
       ]
     },
@@ -47,9 +47,9 @@
       "commit": "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
       "license": "MIT",
       "into": [
-        "skills/building-consistent-ui/build.md",
-        "skills/building-reliable-backend/build.md (tdd)",
-        "skills/building-reliable-backend/code-review.md (two axes: acceptance and standards)"
+        "skills/frontend/build.md",
+        "skills/backend/build.md (tdd)",
+        "skills/backend/code-review.md (two axes: acceptance and standards)"
       ]
     },
     "interface-design": {
@@ -57,7 +57,7 @@
       "commit": "2f9be3206855bcb2d1d0af262c8bae25cba6658d",
       "license": "MIT, Copyright (c) 2026 Damola Akinleye",
       "into": [
-        "skills/building-consistent-ui/design-review.md"
+        "skills/frontend/design-review.md"
       ]
     },
     "pstack-blast-radius": {
@@ -65,7 +65,7 @@
       "commit": "6b0300214a09fd6029cfb7077043125758cd1fd2",
       "license": "MIT, Copyright (c) 2026 Lauren Tan",
       "into": [
-        "skills/building-reliable-backend/code-review.md (Safety fact)"
+        "skills/backend/code-review.md (Safety fact)"
       ]
     },
     "gstack": {
@@ -73,9 +73,9 @@
       "commit": "de5cb247e0ce319a2f7725d589e5c952c6d7761e",
       "license": "MIT, Copyright (c) 2026 Garry Tan",
       "into": [
-        "skills/building-reliable-backend/code-review.md (review checklist and specialists)",
-        "skills/building-reliable-backend/verify.md (reading red results, never weaken a check)",
-        "skills/building-reliable-backend/build.md (data-migration rules)"
+        "skills/backend/code-review.md (review checklist and specialists)",
+        "skills/backend/verify.md (reading red results, never weaken a check)",
+        "skills/backend/build.md (data-migration rules)"
       ]
     }
   }

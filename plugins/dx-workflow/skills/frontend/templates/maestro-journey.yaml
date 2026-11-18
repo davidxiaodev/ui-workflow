@@ -1,0 +1,19 @@
+# One user journey: the acceptance criterion it proves, in the user's steps, ending in what they see.
+# Save as .maestro/journeys/<journey>.yaml; run with `maestro test -e VERIFY_RUN_DIR="$VERIFY_RUN_DIR" .maestro/journeys`.
+appId: <bundle id>
+name: <A1: a signed-in user adds an item and sees it at the top of the list>
+---
+- launchApp:
+    clearState: true
+- startRecording: ${VERIFY_RUN_DIR}/<journey>   # VERIFY_RUN_DIR is passed in with -e (the check in .verify/config.json)
+- openLink: "<scheme>://sign-in?fixture=user"
+- tapOn:
+    id: "add-item"          # testID on the control; text selectors break with copy changes
+- inputText: "Milk"
+- tapOn:
+    id: "save"
+- assertVisible:
+    id: "item-0"
+    text: "Milk"
+- assertNotVisible: "Something went wrong"
+- stopRecording

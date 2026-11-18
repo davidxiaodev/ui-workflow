@@ -2,7 +2,7 @@
 // Reviewer evals: does code-review.md find known bugs, and does it leave clean changes alone?
 //
 //   node evals/run.mjs prepare <case> [--out <dir>]   build the case as a project, run the checks, write the brief
-//   node evals/run.mjs score <dir> <case>              score the .verify/review-api.md a reviewer wrote there
+//   node evals/run.mjs score <dir> <case>              score the .verify/review-backend.md a reviewer wrote there
 //   node evals/run.mjs all [--reviewer "<command>"] [--case <name>]
 //
 // `all` prepares every case; with --reviewer it runs the command in each project with the brief on
@@ -21,7 +21,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const SCRIPTS = resolve(HERE, "../plugins/workflow/scripts");
+const SCRIPTS = resolve(HERE, "../plugins/dx-workflow/scripts");
 const CASES = join(HERE, "cases");
 const GIT_ENV = { GIT_AUTHOR_NAME: "eval", GIT_AUTHOR_EMAIL: "eval@example.com", GIT_COMMITTER_NAME: "eval", GIT_COMMITTER_EMAIL: "eval@example.com", GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" };
 const TESTS = "for f in test/*.test.mjs; do node \"$f\" || exit 1; done";

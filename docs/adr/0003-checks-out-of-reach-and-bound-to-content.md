@@ -34,7 +34,7 @@ modify its own checks, and a review applies to one specific commit.
 - **The change is everything since the base**, commits on the branch included, deletions included.
   A UserPromptSubmit hook records the tree when a turn starts, so the Stop gate checks only turns
   that changed content.
-- **Gate modes.** `UI_WORKFLOW_GATE=enforce|observe|off`; every decision goes to `.verify/gate.log`.
+- **Gate modes.** `DX_WORKFLOW_GATE=enforce|observe|off`; every decision goes to `.verify/gate.log`.
 - **The scripts have tests** (`test/`, `npm test`) and CI, because they are the judge.
 
 ## Consequences
@@ -44,4 +44,4 @@ committed edit to the config becomes the base; set `VERIFY_BASE` there. Setting 
 written before 0.3 lack `Tree:` and must be redone. Hashing the tree costs one `git add -A` into a
 temporary index per run and per stop. The guard patterns are a starting list and will need
 project additions and pruning. Everything here still runs on the agent's machine, where the agent
-can set `UI_WORKFLOW_GATE=off`; the authority for merges belongs in CI, which is the next step.
+can set `DX_WORKFLOW_GATE=off`; the authority for merges belongs in CI, which is the next step.

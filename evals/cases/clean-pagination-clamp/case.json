@@ -1,5 +1,5 @@
 {
-  "lane": "api",
+  "lane": "backend",
   "kind": "clean",
   "request": "Cap the page size of GET /products at 100 and default it to 20.",
   "acceptance": [

@@ -24,10 +24,10 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Syntax check every script
         run: |
-          for f in plugins/workflow/scripts/*.mjs plugins/workflow/scripts/lib/*.mjs; do node --check "$f"; done
+          for f in plugins/dx-workflow/scripts/*.mjs plugins/dx-workflow/scripts/lib/*.mjs; do node --check "$f"; done
       - name: Hooks and plugin manifests are valid JSON
         run: |
-          for f in plugins/workflow/hooks/hooks.json plugins/workflow/.claude-plugin/plugin.json .claude-plugin/marketplace.json plugins/workflow/shared/verify.config.json; do
+          for f in plugins/dx-workflow/hooks/hooks.json plugins/dx-workflow/.claude-plugin/plugin.json .claude-plugin/marketplace.json plugins/dx-workflow/shared/verify.config.json; do
             node -e "JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8'))" "$f" || { echo "invalid JSON: $f"; exit 1; }
           done
       - run: npm test

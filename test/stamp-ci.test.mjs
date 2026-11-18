@@ -15,13 +15,13 @@ const stamp = (root) => node("stamp.mjs", [], { cwd: root }).stdout.trim();
 
 describe("run-verify fail-fast", () => {
   it("skips the rest of a lane after a failure, unless --keep-going", () => {
-    const root = project({ config: { lanes: { api: { files: ["src/**"], checks: [{ name: "a", run: "node -e process.exit(1)" }, { name: "b", run: "node -e 0" }] } } } });
+    const root = project({ config: { lanes: { backend: { files: ["src/**"], checks: [{ name: "a", run: "node -e process.exit(1)" }, { name: "b", run: "node -e 0" }] } } } });
     write(root, { "src/x.mjs": "1\n" });
     node("run-verify.mjs", [], { cwd: root });
-    let checks = JSON.parse(read(root, ".verify/last-run.json")).lanes.api.checks;
+    let checks = JSON.parse(read(root, ".verify/last-run.json")).lanes.backend.checks;
     assert.equal(checks[1].skipped, true);
     node("run-verify.mjs", ["--keep-going"], { cwd: root });
-    checks = JSON.parse(read(root, ".verify/last-run.json")).lanes.api.checks;
+    checks = JSON.parse(read(root, ".verify/last-run.json")).lanes.backend.checks;
     assert.equal(checks[1].exitCode, 0);
   });
 });
@@ -34,7 +34,7 @@ describe("commit stamp", () => {
     assert.equal(stamp(root), "Verified: none (no evidence pack)");
     verify(root);
     git(root, "add", "-A");
-    assert.match(stamp(root), /^Verified: tree=[0-9a-f]{12} tier=1 lanes=api:pass$/);
+    assert.match(stamp(root), /^Verified: tree=[0-9a-f]{12} tier=1 lanes=backend:pass$/);
     write(root, { "src/math.mjs": read(root, "src/math.mjs") + "// staged later\n" });
     git(root, "add", "src/math.mjs");
     assert.equal(stamp(root), "Verified: none (the commit differs from the verified content)");
@@ -54,14 +54,14 @@ describe("commit stamp", () => {
     git(root, "add", "-A");
     git(root, "commit", "-q", "-m", "add sub", "-m", "Co-Authored-By: x <x@example.com>");
     const msg = git(root, "log", "-1", "--format=%B");
-    assert.match(msg, /Co-Authored-By: x <x@example.com>\nVerified: tree=[0-9a-f]{12} tier=1 lanes=api:pass/);
+    assert.match(msg, /Co-Authored-By: x <x@example.com>\nVerified: tree=[0-9a-f]{12} tier=1 lanes=backend:pass/);
     assert.equal(node("stamp.mjs", ["--install"], { cwd: root }).code, 0, "second install is a no-op");
   });
 });
 
 describe("make-evidence extras", () => {
   it("tier 3 for a sensitive path, with merge danger", () => {
-    const root = project({ config: { ...CONFIG, lanes: { api: { ...CONFIG.lanes.api, sensitive: ["src/math.mjs"] } } } });
+    const root = project({ config: { ...CONFIG, lanes: { backend: { ...CONFIG.lanes.backend, sensitive: ["src/math.mjs"] } } } });
     addFeature(root);
     verify(root);
     assert.equal(tierOf(root), "3");
@@ -73,7 +73,7 @@ describe("make-evidence extras", () => {
   });
 
   it("one-way door for a migration, and the acceptance's own revert note", () => {
-    const root = project({ config: { ...CONFIG, lanes: { api: { ...CONFIG.lanes.api, files: ["src/**", "test/**", "migrations/**"], migrations: ["migrations/**"] } } } });
+    const root = project({ config: { ...CONFIG, lanes: { backend: { ...CONFIG.lanes.backend, files: ["src/**", "test/**", "migrations/**"], migrations: ["migrations/**"] } } } });
     addFeature(root);
     write(root, { "migrations/002.sql": "alter table t add column c int;\n" });
     verify(root);
