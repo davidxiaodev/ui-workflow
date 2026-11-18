@@ -30,8 +30,10 @@ How to read a red result:
   check, the base or the spec history to make it pass.
 - **A run is interrupted during the negative check.** `run-verify.mjs --restore` puts the source back.
 
-Rerun one check with `--only <name>` while fixing it, then the full lane before review. Stop after five
-runs or when the same failure returns twice after a fix: report what is red and why.
+Rerun one check with `--only <name>` while fixing it, then the full lane before review. When
+`run-verify.mjs` says the same check "failed again" (two runs in a row), stop fixing and diagnose with
+`<plugin>/shared/debug.md`: the root cause goes in `.verify/debug.md` before the next fix. If you cannot
+find it, report what is red, what you ruled out, and why.
 
 Never weaken, skip, delete or edit a test, a check command or a threshold to get green. Those change the
 contract; propose them to the user.

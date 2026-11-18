@@ -100,11 +100,11 @@ export function addFeature(root) {
 }
 
 /** Everything the gate asks for: a passing run, acceptance, an approved review naming the run's tree, evidence. */
-export function verify(root, { runArgs = [], reviewTree, lane = "backend" } = {}) {
+export function verify(root, { runArgs = [], reviewTree, lane = "backend", acceptance = true } = {}) {
   const run = node("run-verify.mjs", runArgs, { cwd: root });
   const last = JSON.parse(read(root, ".verify/last-run.json"));
+  if (acceptance) write(root, { ".verify/acceptance.md": "# Acceptance: sub\n## Criteria\n- A1 sub(5, 3) returns 2 · proof: test/run.mjs\n" });
   write(root, {
-    ".verify/acceptance.md": "# Acceptance: sub\n## Criteria\n- A1 sub(5, 3) returns 2 · proof: test/run.mjs\n",
     [`.verify/review-${lane}.md`]: [
       `# Review ${last.lanes[lane].runDir}`,
       "Reviewer: test",

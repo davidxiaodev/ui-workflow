@@ -17,6 +17,8 @@ Third-party design skills are tools this workflow calls; they never override the
 
 | Project state | Read |
 | --- | --- |
+| A new feature, a contract or migration change, or unsure which steps a change needs | the `flow` skill first: it sizes the change and may need a spec and tasks before this skill |
+| The same check failed two runs in a row, or the user reports a bug | `<plugin>/shared/debug.md` before the next fix |
 | No `docs/design.md` | `setup.md`, then come back |
 | The app is React Native or Expo (a lane with `"platform": "react-native"`) | `mobile.md` alongside every file below |
 | Any change | `<plugin>/shared/acceptance.md` first: write `.verify/acceptance.md` |
