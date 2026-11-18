@@ -1,12 +1,12 @@
 // Fixture projects for the script tests: a bare "origin" with a main branch, and a clone on a
-// feature branch. The project has one api lane whose unit test is a plain node script.
+// feature branch. The project has one backend lane whose unit test is a plain node script.
 import { execFileSync, spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const SCRIPTS = resolve(dirname(fileURLToPath(import.meta.url)), "../plugins/workflow/scripts");
+export const SCRIPTS = resolve(dirname(fileURLToPath(import.meta.url)), "../plugins/dx-workflow/scripts");
 
 const GIT_ENV = {
   GIT_AUTHOR_NAME: "test",
@@ -19,7 +19,7 @@ const GIT_ENV = {
 
 export const CONFIG = {
   lanes: {
-    api: {
+    backend: {
       files: ["src/**", "test/**"],
       checks: [
         { name: "unit", run: "node test/run.mjs" },
@@ -79,7 +79,7 @@ export function node(script, args = [], { cwd, input, env = {} } = {}) {
     cwd,
     input: input === undefined ? "" : typeof input === "string" ? input : JSON.stringify(input),
     encoding: "utf8",
-    env: { ...process.env, ...GIT_ENV, VERIFY_BASE: "", UI_WORKFLOW_GATE: "", ...env },
+    env: { ...process.env, ...GIT_ENV, VERIFY_BASE: "", DX_WORKFLOW_GATE: "", ...env },
   });
   return { code: r.status, stdout: r.stdout, stderr: r.stderr };
 }
@@ -105,10 +105,10 @@ export function verify(root, { runArgs = [], reviewTree } = {}) {
   const last = JSON.parse(read(root, ".verify/last-run.json"));
   write(root, {
     ".verify/acceptance.md": "# Acceptance: sub\n## Criteria\n- A1 sub(5, 3) returns 2 · proof: test/run.mjs\n",
-    ".verify/review-api.md": [
-      `# Review ${last.lanes.api.runDir}`,
+    ".verify/review-backend.md": [
+      `# Review ${last.lanes.backend.runDir}`,
       "Reviewer: test",
-      `Tree: ${reviewTree ?? last.lanes.api.tree}`,
+      `Tree: ${reviewTree ?? last.lanes.backend.tree}`,
       "",
       "## Acceptance",
       "- [x] A1 met · test/run.mjs passed",

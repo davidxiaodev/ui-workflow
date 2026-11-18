@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { rmSync } from "node:fs";
 import { join } from "node:path";
 import { after, describe, it } from "node:test";
-import { changedSince, globToRegExp, guardChanges, loadConfig, treeHash } from "../plugins/workflow/scripts/lib/verify-config.mjs";
+import { changedSince, globToRegExp, guardChanges, loadConfig, treeHash } from "../plugins/dx-workflow/scripts/lib/verify-config.mjs";
 import { cleanup, CONFIG, git, makeProject, write } from "./helpers.mjs";
 
 const roots = [];
@@ -91,7 +91,7 @@ describe("treeHash and racy edits", () => {
 describe("loadConfig", () => {
   it("reads the base commit's config, and says when the working copy differs", () => {
     const root = project();
-    write(root, { ".verify/config.json": JSON.stringify({ lanes: { api: { files: ["src/**"], checks: [] } } }) });
+    write(root, { ".verify/config.json": JSON.stringify({ lanes: { backend: { files: ["src/**"], checks: [] } } }) });
     const cfg = loadConfig(root);
     assert.equal(cfg.source, "base");
     assert.equal(cfg.workingDiffers, true);
@@ -109,7 +109,7 @@ describe("loadConfig", () => {
     git(root, "fetch", "-q", "origin");
     const cfg = loadConfig(root);
     assert.equal(cfg.source, "working");
-    assert.deepEqual(cfg.lanes.map((l) => l.name), ["api"]);
+    assert.deepEqual(cfg.lanes.map((l) => l.name), ["backend"]);
   });
 });
 
@@ -125,7 +125,7 @@ describe("guardChanges", () => {
   it("flags the config, deleted tests and skipped tests as tier 3", () => {
     const root = project();
     write(root, {
-      ".verify/config.json": JSON.stringify({ ...CONFIG, lanes: { api: { ...CONFIG.lanes.api, checks: [] } } }),
+      ".verify/config.json": JSON.stringify({ ...CONFIG, lanes: { backend: { ...CONFIG.lanes.backend, checks: [] } } }),
       "test/run.mjs": "it.skip('adds', () => {});\n",
       "playwright.config.ts": "export default {};\n",
     });

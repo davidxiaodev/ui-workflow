@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { rmSync } from "node:fs";
 import { join } from "node:path";
 import { after, describe, it } from "node:test";
-import { treeHash } from "../plugins/workflow/scripts/lib/verify-config.mjs";
+import { treeHash } from "../plugins/dx-workflow/scripts/lib/verify-config.mjs";
 import { addFeature, cleanup, CONFIG, evidenceText, git, makeProject, node, read, tierOf, verify, write } from "./helpers.mjs";
 
 const roots = [];
@@ -23,7 +23,7 @@ describe("make-evidence merge tier", () => {
   });
 
   it("counts commits already pushed on the branch as part of the change", () => {
-    const root = project({ config: { ...CONFIG, lanes: { api: { ...CONFIG.lanes.api, contract: ["openapi.yaml"] } } }, files: { "openapi.yaml": "v1\n" } });
+    const root = project({ config: { ...CONFIG, lanes: { backend: { ...CONFIG.lanes.backend, contract: ["openapi.yaml"] } } }, files: { "openapi.yaml": "v1\n" } });
     addFeature(root);
     write(root, { "openapi.yaml": "v2\n" });
     git(root, "add", "-A");
@@ -65,7 +65,7 @@ describe("make-evidence merge tier", () => {
     addFeature(root);
     verify(root, { reviewTree: "0123456789ab" });
     assert.equal(tierOf(root), "not ready");
-    assert.match(evidenceText(root), /verified a different tree than the one on disk \(review api\)/);
+    assert.match(evidenceText(root), /verified a different tree than the one on disk \(review backend\)/);
   });
 
   it("prints a PR body with the check changes and the tree", () => {

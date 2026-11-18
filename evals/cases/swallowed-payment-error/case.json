@@ -1,5 +1,5 @@
 {
-  "lane": "api",
+  "lane": "backend",
   "kind": "bug",
   "request": "Charge the card when an order is placed; the customer must see an error if the charge fails.",
   "acceptance": [

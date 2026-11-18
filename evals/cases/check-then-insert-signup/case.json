@@ -1,5 +1,5 @@
 {
-  "lane": "api",
+  "lane": "backend",
   "kind": "bug",
   "request": "Sign-up must never create two accounts for the same email.",
   "acceptance": [

@@ -58,7 +58,7 @@ describe("stop gate", () => {
     addFeature(root);
     verify(root, { reviewTree: "0123456789ab" });
     assert.match(gate(root).reason, /its review is of tree 0123456789ab/);
-    write(root, { ".verify/review-api.md": read(root, ".verify/review-api.md").replace(/^Tree:.*\n/m, "") });
+    write(root, { ".verify/review-backend.md": read(root, ".verify/review-backend.md").replace(/^Tree:.*\n/m, "") });
     assert.match(gate(root).reason, /has no "Tree:" line/);
   });
 
@@ -95,16 +95,16 @@ describe("stop gate", () => {
   it("only logs in observe mode, and does nothing when off", () => {
     const root = project();
     addFeature(root);
-    assert.equal(gate(root, {}, { UI_WORKFLOW_GATE: "observe" }), null);
+    assert.equal(gate(root, {}, { DX_WORKFLOW_GATE: "observe" }), null);
     assert.equal(gateLog(root).at(-1).decision, "would-block");
-    assert.equal(gate(root, {}, { UI_WORKFLOW_GATE: "off" }), null);
+    assert.equal(gate(root, {}, { DX_WORKFLOW_GATE: "off" }), null);
     assert.equal(gateLog(root).length, 1);
   });
 
   it("does not accept a weakened working config as the lane definition", () => {
     const root = project();
     addFeature(root);
-    write(root, { ".verify/config.json": JSON.stringify({ lanes: { api: { files: ["nothing/**"], checks: [] } } }) });
+    write(root, { ".verify/config.json": JSON.stringify({ lanes: { backend: { files: ["nothing/**"], checks: [] } } }) });
     assert.equal(gate(root).decision, "block");
   });
 });

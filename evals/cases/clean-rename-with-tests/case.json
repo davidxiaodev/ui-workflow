@@ -1,5 +1,5 @@
 {
-  "lane": "api",
+  "lane": "backend",
   "kind": "clean",
   "request": "Rename calcTotal to orderTotal everywhere; no behaviour change.",
   "acceptance": [

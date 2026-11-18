@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { after, describe, it } from "node:test";
-import { treeHash } from "../plugins/workflow/scripts/lib/verify-config.mjs";
+import { treeHash } from "../plugins/dx-workflow/scripts/lib/verify-config.mjs";
 import { addFeature, cleanup, makeProject, node, read, write } from "./helpers.mjs";
 
 const roots = [];
@@ -21,16 +21,16 @@ describe("run-verify", () => {
     const r = node("run-verify.mjs", [], { cwd: root });
     assert.equal(r.code, 0, r.stdout + r.stderr);
     const last = lastRun(root);
-    assert.equal(last.lanes.api.result, "pass");
-    assert.equal(last.lanes.api.tree, treeHash(root));
+    assert.equal(last.lanes.backend.result, "pass");
+    assert.equal(last.lanes.backend.tree, treeHash(root));
     assert.equal(last.config.source, "base");
-    assert.match(last.lanes.api.checks.find((c) => c.name === "negative").note, /tests failed without the change/);
+    assert.match(last.lanes.backend.checks.find((c) => c.name === "negative").note, /tests failed without the change/);
   });
 
   it("runs the base's checks when the change removes them from the working config", () => {
     const root = project();
     write(root, {
-      ".verify/config.json": JSON.stringify({ lanes: { api: { files: ["src/**"], checks: [{ name: "unit", run: "node -e 0" }] } } }),
+      ".verify/config.json": JSON.stringify({ lanes: { backend: { files: ["src/**"], checks: [{ name: "unit", run: "node -e 0" }] } } }),
       "src/math.mjs": "export const add = (a, b) => a - b;\n",
     });
     const r = node("run-verify.mjs", [], { cwd: root });
@@ -43,12 +43,12 @@ describe("run-verify", () => {
 
   it("fails a run whose checks wrote to the source", () => {
     const root = project({
-      config: { lanes: { api: { files: ["src/**"], checks: [{ name: "format", run: "node -e \"require('fs').appendFileSync('src/math.mjs', '\\n')\"" }] } } },
+      config: { lanes: { backend: { files: ["src/**"], checks: [{ name: "format", run: "node -e \"require('fs').appendFileSync('src/math.mjs', '\\n')\"" }] } } },
     });
     const r = node("run-verify.mjs", [], { cwd: root });
     assert.equal(r.code, 1);
     assert.match(r.stdout, /files changed while the checks ran/);
-    assert.equal(lastRun(root).lanes.api.result, "fail");
+    assert.equal(lastRun(root).lanes.backend.result, "fail");
   });
 
   it("refuses to run while a crashed negative check left a backup, and restores it", () => {
@@ -70,7 +70,7 @@ describe("negative check", () => {
     });
     const r = node("run-verify.mjs", ["--only", "negative"], { cwd: root });
     assert.equal(r.code, 1);
-    assert.match(lastRun(root).lanes.api.checks[0].note, /do not test it/);
+    assert.match(lastRun(root).lanes.backend.checks[0].note, /do not test it/);
   });
 
   it("puts the source back after reverting it, binary files included", () => {
@@ -87,7 +87,7 @@ describe("negative check", () => {
     const root = project();
     write(root, { "src/math.mjs": "export const add = (a, b) => b + a;\n" });
     node("run-verify.mjs", ["--only", "negative"], { cwd: root });
-    assert.match(lastRun(root).lanes.api.checks[0].note, /no test changed/);
+    assert.match(lastRun(root).lanes.backend.checks[0].note, /no test changed/);
   });
 });
 
