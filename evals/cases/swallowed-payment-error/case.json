@@ -1,0 +1,14 @@
+{
+  "lane": "api",
+  "kind": "bug",
+  "request": "Charge the card when an order is placed; the customer must see an error if the charge fails.",
+  "acceptance": [
+    "A1 placing an order charges the card once and returns 201",
+    "A2 when the charge fails the caller gets an error and the order is not marked paid"
+  ],
+  "answer": "placeOrder catches the charge error, ignores it, and still marks the order paid and returns 201.",
+  "match": [
+    "(charge|payment|placeOrder|catch)",
+    "(swallow|ignor|empty catch|catch \\{|still (marks|returns)|paid|success)"
+  ]
+}

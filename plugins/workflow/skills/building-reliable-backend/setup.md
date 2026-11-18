@@ -48,12 +48,30 @@ taken from the default branch (`git show origin/main:openapi.yaml > $VERIFY_RUN_
 4. Optional, only when the user wants it: property tests for parsers, money and date maths
    (fast-check, Hypothesis); `semgrep`, `gitleaks` and `osv-scanner` as a `security` check.
 
-## 5. ctl and journeys
+## 5. Guardrails the agent cannot ignore
+
+Agents copy what the code already does, so encode the rules from `docs/backend.md` as checks, not
+only prose (`<plugin>/shared/ratchet.md`, row one):
+
+1. For every rule in `docs/backend.md` that is a pattern, add a lint rule whose message says the fix:
+   for example `no-restricted-syntax` on SQL built with template strings, `no-restricted-imports` on
+   the HTTP client outside the wrapper that sets timeouts, a rule against `console.log` of request
+   bodies. Use the linter the repo already has; for Python, ruff's banned-api; for Go, forbidigo.
+2. Module boundaries as a check (dependency-cruiser, eslint-plugin-boundaries, import-linter): which
+   layers may import which.
+3. Run the new rules over the whole repo. Fix what they find or allowlist it with a count that may only shrink.
+4. Create `docs/checklist.md` with the header from `ratchet.md` and no items; items come from real
+   mistakes. In `.verify/config.json`, fill the lane's `sensitive` paths (auth, billing, permissions,
+   data deletion) with the user: changes there are always merge tier 3.
+5. Optional: a `GLOSSARY.md` of the domain's terms (mattpocock/skills `grill-with-docs` builds one);
+   names in code then follow it, and reviews and briefs get shorter.
+
+## 6. ctl and journeys
 
 Follow `<plugin>/shared/ctl.md`: one control CLI with read and write subcommands, a `verify-<app>`
 skill, and API journeys that call the running app and check the rows.
 
-## 6. Wire `.verify/config.json`
+## 7. Wire `.verify/config.json`
 
 1. The project must be a git repository (the Stop gate and the negative check read git). Ask before `git init`.
 2. If `.verify/config.json` exists (the ui lane is set up), add the `api` lane from

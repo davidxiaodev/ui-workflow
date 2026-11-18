@@ -2,7 +2,7 @@
 // lanes, and lists what changed. A lane is one surface with its own files, checks and reviewer
 // ("ui" uses design-review.md, "api" uses code-review.md).
 import { execFileSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, utimesSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { isAbsolute, join } from "node:path";
 
@@ -170,9 +170,39 @@ export function treeHash(root) {
     const realIndex = gitLines(root, ["rev-parse", "--git-path", "index"])[0];
     const realPath = realIndex && (isAbsolute(realIndex) ? realIndex : join(root, realIndex));
     const env = { ...process.env, GIT_INDEX_FILE: index };
-    if (realPath && existsSync(realPath)) copyFileSync(realPath, index);
+    if (realPath && existsSync(realPath)) copyIndex(realPath, index);
     else execFileSync("git", ["read-tree", "--empty"], { cwd: root, env, stdio: "ignore" });
     execFileSync("git", ["add", "-A", "--", ".", `:(exclude)${VERIFY_DIR}`], { cwd: root, env, stdio: "ignore" });
+    execFileSync("git", ["rm", "-r", "--cached", "--quiet", "--ignore-unmatch", "--", VERIFY_DIR], { cwd: root, env, stdio: "ignore" });
+    return execFileSync("git", ["write-tree"], { cwd: root, env, encoding: "utf8" }).trim();
+  } catch {
+    return null;
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Copies git's index keeping its timestamps. Git trusts a cached file's stat data only when the file
+ * is older than the index; a copy made now would look newer than every file, so an edit in the same
+ * second as the last index write that keeps the size (`a + b` → `a - b`) would be read as unchanged.
+ */
+function copyIndex(from, to) {
+  copyFileSync(from, to);
+  const st = statSync(from);
+  utimesSync(to, st.atime, st.mtime);
+}
+
+/** The hash of what the next commit would contain (the staged index), without .verify/: comparable with treeHash. */
+export function indexTreeHash(root) {
+  const tmp = mkdtempSync(join(tmpdir(), "verify-index-"));
+  const index = join(tmp, "index");
+  try {
+    const realIndex = gitLines(root, ["rev-parse", "--git-path", "index"])[0];
+    const realPath = realIndex && (isAbsolute(realIndex) ? realIndex : join(root, realIndex));
+    const env = { ...process.env, GIT_INDEX_FILE: index };
+    if (realPath && existsSync(realPath)) copyIndex(realPath, index);
+    else execFileSync("git", ["read-tree", "--empty"], { cwd: root, env, stdio: "ignore" });
     execFileSync("git", ["rm", "-r", "--cached", "--quiet", "--ignore-unmatch", "--", VERIFY_DIR], { cwd: root, env, stdio: "ignore" });
     return execFileSync("git", ["write-tree"], { cwd: root, env, encoding: "utf8" }).trim();
   } catch {
@@ -186,6 +216,7 @@ export function treeHash(root) {
 // themselves, so it is never verified by those checks alone: it lands in merge tier 3.
 export const DEFAULT_GUARD = [
   CONFIG_PATH,
+  "docs/checklist.md",
   ".claude/settings.json",
   ".claude/settings.local.json",
   ".claude/hooks/**",

@@ -3,7 +3,10 @@
 // .verify/last-run.json from real exit codes only, so the Stop gate can trust it.
 //
 //   node run-verify.mjs [--lane ui,api] [--only name,name] [--root <project root>]
-//                       [--config base|working] [--base <ref>]
+//                       [--config base|working] [--base <ref>] [--keep-going]
+//
+// A lane stops at its first failing check (cheap checks first: order them in config.json from
+// fastest to slowest); the rest are recorded as skipped. --keep-going runs every check anyway.
 //   node run-verify.mjs --restore     put back files a crashed negative check left reverted
 //   node run-verify.mjs --migrate     move a 0.1 .ui-verify/ setup to .verify/ (lane "ui")
 //
@@ -106,6 +109,11 @@ for (const lane of lanes) {
   const laneStarted = new Date().toISOString();
   const results = [];
   for (const check of checks) {
+    if (!args.includes("--keep-going") && results.some((r) => r.exitCode !== 0)) {
+      console.log(`run-verify: ${lane.name}/${check.name} … skipped (an earlier check failed; --keep-going runs it)`);
+      results.push({ name: check.name, run: check.run ?? "built-in negative check", exitCode: null, skipped: true, seconds: 0, log: null, note: "skipped after an earlier failure" });
+      continue;
+    }
     const cwd = resolve(root, check.cwd ?? ".");
     const env = { ...process.env, VERIFY_RUN_DIR: runDir, UI_VERIFY_RUN_DIR: runDir, VERIFY_LANE: lane.name };
     const timeoutMs = (check.timeoutMin ?? 20) * 60_000;
@@ -129,7 +137,7 @@ for (const lane of lanes) {
     console.log(`${exitCode === 0 ? "pass" : `FAIL (exit ${exitCode})`} in ${seconds}s${note ? ` (${note})` : ""}`);
     results.push({ name: check.name, run: check.run ?? "built-in negative check", exitCode, seconds, log, ...(note ? { note } : {}) });
   }
-  const failed = results.filter((r) => r.exitCode !== 0);
+  const failed = results.filter((r) => r.exitCode !== 0 && !r.skipped);
   anyFailed ||= failed.length > 0;
   record.lanes[lane.name] = {
     startedAt: laneStarted,

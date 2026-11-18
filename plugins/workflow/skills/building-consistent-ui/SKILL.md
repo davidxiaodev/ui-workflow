@@ -24,6 +24,7 @@ Third-party design skills are tools this workflow calls; they never override the
 | Asked only to review or check UI | `verify.md`, then `design-review.md` |
 | No scripted way to start the app and drive its journeys | `<plugin>/shared/ctl.md` |
 | The change also touches endpoints, jobs or schema | the `building-reliable-backend` skill for the api lane; both lanes must pass |
+| A review found a Blocker, a change was reverted, or the user corrected you | `<plugin>/shared/ratchet.md`: make it a check |
 | Project still has `.ui-verify/` (0.1) | `node <plugin>/scripts/run-verify.mjs --migrate`, then follow what it prints |
 
 ## Style change requests
@@ -72,8 +73,9 @@ A tool missing: say which, continue with this skill's own checks, never pretend 
 
 ## Done means
 
-`run-verify.mjs` printed `pass` for every lane the change touched, `.verify/review-ui.md` (written
-with `design-review.md` by a fresh reviewer) is newer than that run, has no open line, marks every
-acceptance id from `.verify/acceptance.md` and says `Verdict: approved`, `make-evidence.mjs` wrote
-the evidence pack after it, and your final message starts with the evidence path and the merge tier,
+`run-verify.mjs` printed `pass` for every lane the change touched, on the content now on disk;
+`.verify/review-ui.md` (written by a fresh reviewer from the `review-brief.mjs` brief, with
+`design-review.md`) names that same tree, has no open line, marks every acceptance id from
+`.verify/acceptance.md` and every triggered checklist item, and says `Verdict: approved`;
+`make-evidence.mjs` wrote the evidence pack after it, for the same tree; and your final message starts with the evidence path and the merge tier,
 then lists the follow-ups, the criteria not checked and what could not be checked.

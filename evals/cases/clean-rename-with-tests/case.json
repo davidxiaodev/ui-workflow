@@ -1,0 +1,9 @@
+{
+  "lane": "api",
+  "kind": "clean",
+  "request": "Rename calcTotal to orderTotal everywhere; no behaviour change.",
+  "acceptance": [
+    "A1 orderTotal returns the same totals calcTotal did, including discounts"
+  ],
+  "answer": "Correct: a pure rename, callers and tests updated."
+}

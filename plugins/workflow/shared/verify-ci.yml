@@ -1,0 +1,58 @@
+# Copy to .github/workflows/verify.yml in a project that uses ui-workflow.
+#
+# On every pull request it reruns the lanes' checks from the base branch's .verify/config.json on
+# the PR's head, and computes the merge tier from the checks and what changed (contracts, sensitive
+# paths, shared parts, changes to the checks themselves). The result is the job summary and a
+# "verify" status you can require in branch protection. No independent review runs here; the tier
+# says so ("checks only"). Running the reviewer in CI too is a separate decision (see the README).
+#
+# Fill the two marked steps with the project's own setup (dependencies, services the checks need).
+name: verify
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      # Pin the plugin to a release tag or commit; upgrade it in its own pull request.
+      UI_WORKFLOW_REF: v0.4.0
+      VERIFY_BASE: origin/${{ github.base_ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Get ui-workflow
+        run: |
+          git clone --quiet --depth 1 --branch "$UI_WORKFLOW_REF" https://github.com/davidxiaodev/workflow "$RUNNER_TEMP/ui-workflow"
+          echo "UI_WORKFLOW=$RUNNER_TEMP/ui-workflow/plugins/workflow" >> "$GITHUB_ENV"
+
+      # >>> project setup: install dependencies, start the services the checks need
+      - name: Install
+        run: npm ci
+      # <<< project setup
+
+      - name: Run the checks (from the base branch's config)
+        run: node "$UI_WORKFLOW/scripts/run-verify.mjs" --keep-going
+      - name: Merge tier
+        if: always()
+        run: node "$UI_WORKFLOW/scripts/make-evidence.mjs" --checks-only --exit-code >> "$GITHUB_STEP_SUMMARY"
+      - name: Keep logs and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-run
+          path: .verify/runs/
+          if-no-files-found: ignore

@@ -25,6 +25,7 @@ the contract. `<skill>` is this skill's folder; `<plugin>` is two levels up (it 
 | Asked only to review a change | `verify.md` (dispatch), then `code-review.md` |
 | No scripted way to start the app and drive requests | `<plugin>/shared/ctl.md` |
 | The change also touches screens | the `building-consistent-ui` skill for the ui lane; both lanes must pass |
+| A review found a Blocker, a change was reverted, or the user corrected you | `<plugin>/shared/ratchet.md`: make it a check |
 
 ## Contract changes
 
@@ -50,8 +51,10 @@ non-breaking way unless they choose the break. It is tier 3 either way.
 
 ## Done means
 
-`run-verify.mjs` printed `pass` for every lane the change touched; `.verify/review-api.md` (written
-with `code-review.md` by a fresh reviewer) is newer than that run, has no open line, marks every
-acceptance id and says `Verdict: approved`; `make-evidence.mjs` wrote the evidence pack after it;
+`run-verify.mjs` printed `pass` for every lane the change touched, on the content now on disk;
+`.verify/review-api.md` (written by a fresh reviewer from the `review-brief.mjs` brief, with
+`code-review.md`) names that same tree, has no open line, marks every acceptance id and every
+triggered checklist item, and says `Verdict: approved`; `make-evidence.mjs` wrote the evidence pack
+after it, for the same tree;
 and your final message starts with the evidence path and the merge tier, then lists the follow-ups,
 the criteria not checked, and what could not run.
