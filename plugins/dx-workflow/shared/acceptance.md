@@ -12,7 +12,7 @@ as the requirement being met.
 | --- | --- |
 | Copy, a colour, a one-line fix | 1 to 3 criteria, no interview |
 | A feature inside one lane, no contract change | the criteria plus the adverse cases below that apply |
-| A new flow, an API or data contract change, a migration, auth | interview the user first (below), then the full list |
+| A new flow, an API or data contract change, a migration, auth | a spec first (`shared/spec.md`, size L in the `flow` skill): the criteria live in the spec and each task's file is generated from it |
 
 ## Interview first when the change is big
 
@@ -71,6 +71,8 @@ to prevent.
 ```markdown
 # Acceptance: <the change, one line>
 Request: <the user's words, or a link to the issue>
+Spec: <optional: docs/specs/<slug>.md, when the change has one (flow-check.mjs acceptance writes these two lines)>
+Task: <optional: T<n> (docs/specs/<slug>.tasks.md)>
 Lanes: <frontend, backend>
 Revert: <optional: how to undo it if it is more than reverting the commit (a flag to turn off, data to restore)>
 Door: <optional: "one-way: <why>" when it cannot be undone (an email sent, a third party called); migrations and contracts are detected>

@@ -166,6 +166,30 @@ if (treeBefore !== treeAfter) {
   console.log("run-verify: files changed while the checks ran, so the result does not describe what is on disk. Run formatters and generators in check mode, then rerun.");
 }
 
+// The same check failing run after run means guessing, not fixing. Count consecutive failures per
+// check; from the second, stop and diagnose (shared/debug.md) before the next fix.
+const failuresPath = join(cfg.dir, "failures.json");
+const failures = readJson(failuresPath) ?? {};
+const stuck = [];
+for (const name of ranLanes) {
+  for (const c of record.lanes[name].checks) {
+    const key = `${name}/${c.name}`;
+    if (c.skipped) continue;
+    if (c.exitCode === 0) delete failures[key];
+    else {
+      failures[key] = { count: (failures[key]?.count ?? 0) + 1, since: failures[key]?.since ?? new Date().toISOString() };
+      c.failedRunsInARow = failures[key].count;
+      if (failures[key].count >= 2) stuck.push(`${key} (${failures[key].count} runs)`);
+    }
+  }
+}
+writeFileSync(failuresPath, JSON.stringify(failures, null, 2) + "\n");
+if (stuck.length) {
+  console.log(
+    `run-verify: failed again: ${stuck.join(", ")}. Stop changing code until you know why: follow <plugin>/shared/debug.md (or a debugging skill it names), write the root cause in .verify/debug.md, then fix it once.`,
+  );
+}
+
 record.finishedAt = new Date().toISOString();
 writeFileSync(join(cfg.dir, "last-run.json"), JSON.stringify(record, null, 2) + "\n");
 

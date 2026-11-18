@@ -1,7 +1,7 @@
 {
   "name": "dx-workflow",
-  "version": "0.5.0",
-  "description": "Front-end and back-end changes you can trust: acceptance criteria first, a design contract and a backend contract, checks per lane (frontend on the web or React Native / Expo, backend) including a negative check, independent review, an evidence pack with a computed merge tier, and a Stop gate. Checks are read from the base commit, runs and reviews are bound to a content hash, and changes to the checks themselves are tier 3.",
+  "version": "0.6.0",
+  "description": "A request to a mergeable change with a gate between every step: size the change, spec and tasks for large ones (flow-check), acceptance criteria first, a design contract and a backend contract, checks per lane (frontend on the web or React Native / Expo, backend) including a negative check, independent review, an evidence pack with a computed merge tier, and a Stop gate. Checks are read from the base commit, runs and reviews are bound to a content hash, and changes to the checks themselves are tier 3. Works with Matt Pocock's skills, superpowers and agent-skills for the work inside a step.",
   "author": {
     "name": "davidxiaodev"
   },

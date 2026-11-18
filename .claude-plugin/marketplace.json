@@ -7,7 +7,7 @@
     {
       "name": "dx-workflow",
       "source": "./plugins/dx-workflow",
-      "description": "Acceptance first, one design and one backend contract, enforced verification per lane (frontend, backend) with independent review and evidence."
+      "description": "Request to merge with real gates: spec and tasks for large changes, acceptance first, one design and one backend contract, enforced verification per lane (frontend, backend) with independent review and evidence."
     }
   ]
 }

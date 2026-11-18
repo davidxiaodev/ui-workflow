@@ -19,6 +19,8 @@ the contract. `<skill>` is this skill's folder; `<plugin>` is two levels up (it 
 
 | Project state | Read |
 | --- | --- |
+| A new feature, a contract or migration change, or unsure which steps a change needs | the `flow` skill first: it sizes the change and may need a spec and tasks before this skill |
+| The same check failed two runs in a row, or the user reports a bug | `<plugin>/shared/debug.md` before the next fix |
 | No `docs/backend.md` or no `backend` lane in `.verify/config.json` | `setup.md`, then come back |
 | Any change | `<plugin>/shared/acceptance.md` first: write `.verify/acceptance.md` |
 | Building or changing endpoints, jobs, schema | `build.md`, then `verify.md` |

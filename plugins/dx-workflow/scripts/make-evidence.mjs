@@ -199,6 +199,14 @@ const md = [];
 md.push(`# Evidence: ${basename(runDir)}`, "");
 md.push(`**Merge tier: ${tier.id}.** ${tier.rule}`, "");
 md.push(`Tree: ${current ?? "unknown"}`, `Base: ${cfg.base ?? "none"}`, "");
+// Where this change comes from: the spec and task its acceptance was generated from (flow-check).
+const specRef = /^Spec:\s*(.+)$/m.exec(acceptanceText)?.[1].trim();
+const taskRef = /^Task:\s*(.+)$/m.exec(acceptanceText)?.[1].trim();
+const trace = [specRef && `Spec: ${specRef}`, taskRef && `Task: ${taskRef}`].filter(Boolean);
+if (trace.length) md.push(...trace, "");
+// A check that failed run after run was diagnosed before it was fixed (shared/debug.md).
+const debugPath = join(cfg.dir, "debug.md");
+const debugText = existsSync(debugPath) ? readFileSync(debugPath, "utf8").trim() : "";
 md.push(`- Lanes: ${lanes.map((l) => l.name).join(", ") || "none"}`);
 for (const r of reviews) md.push(`- Review ${r.lane.name}: ${r.verdict}, by ${r.reviewer}; ${r.open.length} open, ${r.deferred.length} deferred`);
 md.push(`- Contract changes: ${list(contractChanges)}`);
@@ -209,6 +217,7 @@ md.push(`- Shared parts changed: ${list(sharedChanges)}`);
 for (const r of reviews) md.push(`- Not checked (${r.lane.name}): ${r.notChecked}`);
 md.push("");
 md.push("## Merge danger", "", ...danger, "");
+if (debugText) md.push("## Diagnosed failures", "", debugText.replace(/^#.*\n+/, ""), "");
 md.push("## Acceptance: verified by the independent reviewers", "");
 if (checksOnly) md.push("- not part of a checks-only run", "");
 else if (criteria.length === 0) md.push("- no .verify/acceptance.md criteria", "");
@@ -264,6 +273,7 @@ if (wantPr) {
     "",
     `**Merge tier: ${tier.id}.** ${tier.rule}`,
     "",
+    ...(trace.length ? [trace.join(" · "), ""] : []),
     "### Merge danger",
     ...danger,
     "",
