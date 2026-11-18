@@ -1,5 +1,8 @@
 # Build: changing a screen
 
+In a React Native / Expo app, also follow `mobile.md` "Build" (safe areas, keyboard, Android back,
+large text, native changes) and its mobile adverse cases.
+
 0. No `.verify/acceptance.md` for this change yet: write it with `<plugin>/shared/acceptance.md`,
    going through the UI adverse cases (invalid input, keyboard, slow and failed requests, double
    submit, 390px, no permission). Each criterion names its proof: a page and state in

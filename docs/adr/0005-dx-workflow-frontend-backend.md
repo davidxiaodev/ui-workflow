@@ -21,11 +21,18 @@ end includes mobile clients.
 - The frontend review is the design review plus a frontend `code-review.md` (state, requests and
   races, forms, security, accessibility in code, performance, the backend contract, tests), in one
   review file.
+- Mobile is frontend: a lane with `"platform": "react-native"` (React Native, Expo) gets default
+  files, `rn-look.mjs` screenshots (simulators through Maestro; default, dark and large-text
+  variants; a dependency-free PNG diff), a React Native mode of `check-raw-styles.mjs`, Maestro
+  journeys, mobile review lenses and adverse cases. Native changes (`native` globs, or a new native
+  module in `package.json`) are merge tier 3 and a one-way door, because they ship only in a store
+  build. Checks that need a simulator can be `"ci": false`.
 - No compatibility with earlier names: the 0.1 `.ui-verify/` migration, `UI_VERIFY_RUN_DIR` and the
   upgrade notes are gone. The Stop gate variable is `DX_WORKFLOW_GATE`.
 
 ## Consequences
 
 Projects set up before this rename key their config by `ui`/`api` and must rename lanes or add
-`kind`. Mobile (React Native / Expo) support is the next change: platform defaults for lane files,
-token checks, screenshots, journeys and review lenses.
+`kind`. Only React Native / Expo is covered among mobile stacks; native iOS, Android and Flutter
+would each need their own defaults, screenshot tool and lenses. `rn-look.mjs` is tested with
+recorded screenshots and a dry run, not against a live simulator in CI.

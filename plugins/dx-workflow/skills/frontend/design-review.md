@@ -49,6 +49,7 @@ For each lens ask: did someone decide, or did it default?
 | E. States and polish | Empty, loading, error, disabled, focus present; 44px touch targets; text not clipped or wrapping badly at 390 |
 | F. Structure and content | Shared parts reused, no hand-rolled control where a part exists, no tokens bypassed; every visible string tells one coherent story |
 | G. Consistency | Put every page of the same group side by side at one width: same header, spacing, type roles, parts. Content may differ; style may not |
+| H. Mobile (React Native) | Safe areas (notch, home indicator, status bar never overlapped); the large-text variant: nothing clipped, overlapping or truncated that the user needs; touch targets 44 pt / 48 dp; dark variant uses the theme, no stray light surfaces; iOS and Android differ only where design.md says; the smallest phone does not cram, the largest does not stretch |
 
 Three quick tests while you look:
 

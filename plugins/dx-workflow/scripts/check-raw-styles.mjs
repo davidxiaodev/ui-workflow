@@ -3,9 +3,16 @@
 // arbitrary values (p-[13px], bg-[#fff]) and literal colours in style objects.
 //
 //   node check-raw-styles.mjs <dir|file>... [--tokens <file>]... [--allow <path-substring>]... [--json]
+//                             [--platform web|react-native] [--spacing-scale 0,4,8,12,16,24,32]
+//
+// --platform react-native (React Native, Expo; NativeWind classes are checked as on the web) adds:
+// colour literals in any *Color / color style key or prop (StyleSheet and JSX: color="#fff",
+// placeholderTextColor="gray"), and fontSize / fontFamily / lineHeight literals. --spacing-scale also
+// flags padding, margin and gap numbers that are not on the scale.
 //
 // Token files (where raw values belong) are skipped: globals.css, variables.css, tailwind.config.*,
-// plus every --tokens path. Exit 0 = clean, 1 = findings, 2 = usage error.
+// theme / tokens / colors / typography / spacing .ts|.js|.json, plus every --tokens path.
+// Exit 0 = clean, 1 = findings, 2 = usage error.
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join, relative, resolve, basename } from "node:path";
 
@@ -14,23 +21,28 @@ const roots = [];
 const tokens = [];
 const allow = [];
 let asJson = false;
+let platform = "web";
+let spacingScale = null;
 for (let i = 0; i < args.length; i++) {
   const a = args[i];
   if (a === "--tokens") tokens.push(resolve(args[++i] ?? ""));
   else if (a === "--allow") allow.push(args[++i] ?? "");
   else if (a === "--json") asJson = true;
+  else if (a === "--platform") platform = args[++i] ?? "";
+  else if (a === "--spacing-scale") spacingScale = new Set((args[++i] ?? "").split(",").map((n) => Number(n.trim())));
   else if (a === "-h" || a === "--help") usage(0);
   else roots.push(a);
 }
-if (roots.length === 0) usage(2);
+if (roots.length === 0 || !["web", "react-native"].includes(platform)) usage(2);
 
 const EXTS = new Set([".tsx", ".jsx", ".ts", ".js", ".vue", ".svelte", ".html", ".css", ".scss"]);
 const SKIP_DIRS = new Set(["node_modules", ".git", ".next", "dist", "build", "out", ".turbo", "coverage", ".expo", "ios", "android"]);
-const TOKEN_NAMES = [/^globals\.css$/, /^variables\.css$/, /^tailwind\.config\.[cm]?[jt]s$/, /^tokens?\.(css|json|ts)$/];
+const TOKEN_NAMES = [/^globals\.css$/, /^variables\.css$/, /^tailwind\.config\.[cm]?[jt]s$/, /^(?:tokens?|theme|colou?rs|typography|spacing)\.(?:css|json|[cm]?[jt]s)$/];
+const NAMED = "white|black|red|green|blue|yellow|orange|purple|pink|gray|grey|silver|navy|teal|maroon|olive|lime|aqua|fuchsia";
 const PALETTE = "slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose";
 const UTIL = "bg|text|border|ring|fill|stroke|from|to|via|outline|decoration|shadow|divide|placeholder|accent|caret";
 
-const RULES = [
+const WEB_RULES = [
   {
     id: "palette-class",
     re: new RegExp(`(?<![\\w-])(?:[a-z]+:)*(?:${UTIL})-(?:${PALETTE})-\\d{2,3}(?:\\/\\d+)?(?![\\w-])`, "g"),
@@ -52,6 +64,23 @@ const RULES = [
     fix: "Use background/foreground tokens so dark mode and brand overrides work.",
   },
 ];
+
+const RN_RULES = [
+  {
+    id: "rn-literal-colour",
+    re: new RegExp(`\\b(?:[a-z][A-Za-z]*Color|color|tint)\\s*[:=]\\s*\\{?\\s*['"\`]\\s*(?:#[0-9a-fA-F]{3,8}|rgba?\\(|hsla?\\(|(?:${NAMED})\\b)`, "g"),
+    fix: "Use a colour from the theme (theme.colors.primary, a useTheme() value or a NativeWind token class) so dark mode and brand changes reach it.",
+  },
+  {
+    id: "rn-font-literal",
+    re: /\b(?:fontSize|lineHeight)\s*:\s*\d+(?:\.\d+)?|\bfontFamily\s*:\s*['"`][^'"`]*/g,
+    fix: "Use a text style from the typography tokens (a <Text variant> or theme.text.body); one-off sizes break the type scale and Dynamic Type.",
+  },
+];
+const SPACING = /\b(?:padding|margin)(?:Top|Bottom|Left|Right|Horizontal|Vertical|Start|End)?\s*:\s*(-?\d+(?:\.\d+)?)\b|\b(?:gap|rowGap|columnGap)\s*:\s*(\d+(?:\.\d+)?)\b/g;
+
+const RULES = platform === "react-native" ? [...WEB_RULES.filter((r) => r.id !== "literal-colour"), ...RN_RULES] : WEB_RULES;
+if (spacingScale) RULES.push({ id: "off-scale-spacing", re: SPACING, fix: `Use the spacing scale (${[...spacingScale].join(", ")}) or a theme spacing value.` });
 
 const findings = [];
 for (const r of roots) walk(resolve(r));
@@ -97,6 +126,7 @@ function walk(p) {
       for (const m of text.matchAll(rule.re)) {
         if (text[m.index + m[0].length] === ":") continue;
         if (rule.id === "arbitrary-value" && isAllowedArbitrary(m[0])) continue;
+        if (rule.id === "off-scale-spacing" && spacingScale.has(Math.abs(Number(m[1] ?? m[2])))) continue;
         findings.push({ rule: rule.id, file: rel, line: i + 1, match: m[0] });
       }
     }
@@ -117,6 +147,6 @@ function isAllowedArbitrary(token) {
 }
 
 function usage(code) {
-  console.error("usage: node check-raw-styles.mjs <dir|file>... [--tokens <file>]... [--allow <path-substring>]... [--json]");
+  console.error("usage: node check-raw-styles.mjs <dir|file>... [--tokens <file>]... [--allow <path-substring>]... [--json] [--platform web|react-native] [--spacing-scale 0,4,8,…]");
   process.exit(code);
 }

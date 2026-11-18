@@ -46,6 +46,16 @@ to prevent.
 - 390px wide; long words and translations; dark mode if the product has one
 - signed out, no permission, expired session
 
+**Mobile (React Native / Expo)**
+
+- large system text size; smallest supported phone; dark mode
+- offline or slow network: the failure is shown, retry works, input is kept
+- backgrounded and resumed mid-flow; killed and reopened from a deep link or notification
+- a permission denied (camera, location, notifications)
+- Android back on every screen; the keyboard never covers the focused field
+- VoiceOver / TalkBack can finish the flow
+- an older app build still in use (over-the-air JavaScript, the API it calls)
+
 **API and data**
 
 - boundaries: zero, one, maximum, just past maximum; empty and missing fields; wrong types

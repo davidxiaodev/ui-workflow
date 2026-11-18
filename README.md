@@ -9,7 +9,7 @@
 
 ## 整套流程
 
-前端（frontend：用户直接接触的客户端；目前支持 Web，React Native / Expo 移动端在下一个版本）和后端（backend）走同一套流程，只是每一步用的约定、检查和评审方式不同。
+前端（frontend：用户直接接触的客户端，Web 和 React Native / Expo 移动端）和后端（backend）走同一套流程，只是每一步用的约定、检查和评审方式不同。
 项目里每一个客户端或服务叫一个 **lane**，一个仓库可以有多条，比如 `web`、`app`、`api`，各自标明 `kind` 是 `frontend` 还是 `backend`。
 
 | 步骤 | 做什么 | frontend lane | backend lane |
@@ -18,13 +18,27 @@
 | 1 澄清 | 只在大改动时：先追问需求、边界、失败时怎么办 | 同左 | 同左 |
 | 2 验收标准 | 写 `.verify/acceptance.md`：可观察的结果，每条写明用什么证明；逐项过一遍异常情况清单；可选写明怎么回滚、能否撤回 | 无效输入、键盘、慢请求、双击提交、390 宽…… | 边界值、越权、重复请求、并发写、下游失败…… |
 | 3 实现 | 按约定做 | 需要时出 3 个结构不同的原型 | 先改契约，再按验收标准一条条先写测试后写实现 |
-| 4 机器检查 | `run-verify.mjs` 按 lane 跑，只认真实退出码，遇到第一个失败就停 | 样式、类型、截图 + 可访问性、用户路径 | 类型、单元、真实数据库的集成测试、**负向检查**、契约、迁移、用户路径 |
+| 4 机器检查 | `run-verify.mjs` 按 lane 跑，只认真实退出码，遇到第一个失败就停 | 样式、类型、截图 + 可访问性、用户路径（Web 用 Playwright；移动端用模拟器截图 `rn-look.mjs` 和 Maestro） | 类型、单元、真实数据库的集成测试、**负向检查**、契约、迁移、用户路径 |
 | 5 独立评审 | `review-brief.mjs` 写 brief，交给没参与实现的子代理；逐条标记验收标准和触发的清单项；最多 3 轮 | `design-review.md` 看截图，再用前端版 `code-review.md` 看代码（状态、请求竞态、错误态、XSS、可访问性） | `code-review.md` 看 diff，按专项逐一检查，并跑一遍证明关键事实 |
 | 6 证据和分档 | `make-evidence.mjs` 生成证据包：验收标准和机器检查分开写，算合并分档，写明能否撤回、影响范围、怎么回滚 | 前后对比截图、录屏 | 检查日志、负向检查结果、契约与迁移改动 |
 | 7 沉淀 | 评审的 Blocker、回滚、你的纠正，按 `shared/ratchet.md` 变成检查或清单项 | 同左 | 同左 |
 
 改动大小决定流程轻重：改文案、改颜色这类小改动不用追问，验收标准写 1 到 3 条，评审走 quick；
 新流程、接口或数据契约变更、迁移、鉴权才走完整流程，评审走 deep。
+
+**移动端（React Native / Expo）**：lane 写 `"kind": "frontend", "platform": "react-native"`，默认覆盖全部 JS/TS 代码和
+`app.json`、`ios/`、`android/` 等原生配置。和 Web 的区别：
+
+- 截图用 `rn-look.mjs`：在 iOS 模拟器和 Android 模拟器上，用 Maestro 按深链接打开每个页面，固定状态栏，
+  分默认、暗色、大字号三种各截一张，和基线逐像素比较（内置 PNG 比较，不需要依赖），差异图和报告进证据包；
+- 样式检查加 `--platform react-native`：样式和属性里写死的颜色、字号字体、不在间距刻度上的数值；
+- 用户路径用 Maestro flow（用 testID 定位）；
+- 原生改动（`app.json`、`ios/`、`android/`、`package.json` 新增原生模块）只能随新的商店版本发出，旧版本用户会一直用旧原生代码，
+  所以固定 3 档、标为不可撤回，评审走 deep；
+- 验收标准和评审多一组移动端情况：大字号、最小机型、暗色、断网、切后台、权限被拒、Android 返回键、键盘遮挡、读屏、旧版本 App。
+- 模拟器在 CI 里需要 macOS 或模拟器 runner；跑不了的检查标 `"ci": false`，只在本地跑，CI 里记为未运行。
+
+详见 `skills/frontend/mobile.md`。
 
 **负向检查**：把这条 lane 里的源码改动退回到基线、保留新测试，再跑一遍测试，测试必须失败。
 测试在没有实现时也能通过，说明它没测到这次改动。
@@ -37,7 +51,7 @@
 | --- | --- | --- |
 | 1 | 检查全过、评审通过、验收标准全部满足，且没有下面的情况 | 扫一眼证据包即可合并 |
 | 2 | 改了截图基线或共享模块（`shared`）；有验收标准"未验证"；改了源码却没改测试；代码里新增了 `@ts-ignore`、`eslint-disable`、`noqa` 这类关掉检查的注释，或者加了重试 | 你要看前后对比和标出来的部分 |
-| 3 | 改了设计约定、后端约定、接口契约或迁移；改了 `sensitive` 路径；**改了检查本身**（见下） | 你确认之后才能合并 |
+| 3 | 改了设计约定、后端约定、接口契约或迁移；改了 `sensitive` 路径；移动端的原生改动；**改了检查本身**（见下） | 你确认之后才能合并 |
 | 未就绪 | 检查失败、评审未通过、有验收标准未满足或没被评审；运行或评审对应的不是当前磁盘上的内容 | 不合并 |
 
 证据包和 PR 描述里还有一节"合并风险"：能否撤回（有迁移是单向的，改了接口契约对已接入的调用方也是单向的）、
@@ -158,7 +172,7 @@ baoyu-design 是可选的看图调色工具，只在项目仓库外用（它含�
 
 | 路径 | 作用 |
 | --- | --- |
-| `plugins/dx-workflow/skills/frontend/` | 前端：`SKILL.md`（入口）、`setup.md`、`build.md`、`verify.md`、`design-review.md`（截图评审）、`code-review.md`（前端代码评审）、`templates/`（design.md、截图测试、页面清单） |
+| `plugins/dx-workflow/skills/frontend/` | 前端：`SKILL.md`（入口）、`setup.md`、`build.md`、`verify.md`、`mobile.md`（React Native / Expo）、`design-review.md`（截图评审）、`code-review.md`（前端代码评审）、`templates/`（design.md、Web 截图测试、页面清单、`rn-look.json`、Maestro journey） |
 | `plugins/dx-workflow/skills/backend/` | 后端：`SKILL.md`（入口）、`setup.md`、`build.md`、`verify.md`、`code-review.md`（代码评审）、`templates/backend.md` |
 | `plugins/dx-workflow/shared/acceptance.md` | 怎么写验收标准、异常情况清单、评审怎么标记 |
 | `plugins/dx-workflow/shared/ctl.md` | 生成项目的控制命令（读写分开），以及 `verify-<app>` skill 和用户路径 |
@@ -177,7 +191,9 @@ baoyu-design 是可选的看图调色工具，只在项目仓库外用（它含�
 | `plugins/dx-workflow/scripts/stop-gate.mjs` | Stop 钩子 |
 | `plugins/dx-workflow/scripts/turn-start.mjs` | UserPromptSubmit 钩子：记录这一轮开始时的内容哈希和插件位置 |
 | `plugins/dx-workflow/scripts/stamp.mjs` | 提交盖章；`--install` 装 git 钩子 |
-| `plugins/dx-workflow/scripts/check-raw-styles.mjs` | 找出写死的颜色、Tailwind 色板类、任意值 |
+| `plugins/dx-workflow/scripts/check-raw-styles.mjs` | 找出写死的颜色、Tailwind 色板类、任意值；`--platform react-native` 加查 RN 样式 |
+| `plugins/dx-workflow/scripts/rn-look.mjs` | 移动端截图：模拟器 + Maestro，按设备和默认/暗色/大字号比较基线 |
+| `plugins/dx-workflow/scripts/lib/png.mjs` | 无依赖的 PNG 解码、比较和差异图 |
 | `plugins/dx-workflow/scripts/find-tools.mjs` | 找到已安装的 taste-skill、ui-ux-pro-max、baoyu-design |
 | `plugins/dx-workflow/scripts/lib/verify-config.mjs` | 读配置（从基线提交）、算改动范围和内容哈希、找出"改了检查本身"的改动 |
 | `plugins/dx-workflow/scripts/lib/checklist.mjs` | 解析 `docs/checklist.md`，按 diff 选出触发的条目 |

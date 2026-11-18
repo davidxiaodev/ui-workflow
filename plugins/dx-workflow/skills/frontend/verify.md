@@ -1,5 +1,9 @@
 # Verify: prove the screen is right
 
+In a React Native / Expo lane the look check is `rn-look.mjs` (simulators, default, dark and
+large-text variants) and the journeys are Maestro flows; read `mobile.md` "Verify" for what a phone
+adds. Use `--lane <name>` with the lane's name (`app`, `web`, …).
+
 ## Run the checks
 
 `node <plugin>/scripts/run-verify.mjs --lane frontend` runs the frontend lane's checks in `.verify/config.json`

@@ -10,6 +10,9 @@ export const VERIFY_DIR = ".verify";
 
 // Paths a lane ignores unless its config says otherwise: test code and verification output.
 const FRONTEND_FILES = ["**/*.{tsx,jsx,vue,svelte,html,css,scss}"];
+// React Native / Expo: all app code is UI code, and native config ships with the store build.
+const RN_FILES = ["**/*.{ts,tsx,js,jsx}", "app.json", "app.config.{js,ts}", "eas.json", "ios/**", "android/**", "assets/**"];
+const RN_NATIVE = ["app.json", "app.config.{js,ts}", "eas.json", "ios/**", "android/**"];
 const FRONTEND_IGNORE = [
   "**/e2e/**",
   "**/test/**",
@@ -50,12 +53,16 @@ export function loadConfig(root, { source = "base", base } = {}) {
   const config = JSON.parse(text);
   const lanes = Object.entries(config.lanes ?? {}).map(([name, lane]) => {
     const kind = lane.kind ?? name;
+    const platform = kind === "frontend" ? (lane.platform ?? "web") : null;
+    const rn = platform === "react-native";
     return {
       ...lane,
       name,
       kind,
-      files: lane.files ?? (kind === "frontend" ? FRONTEND_FILES : []),
-      ignore: [...(lane.ignore ?? (kind === "frontend" ? FRONTEND_IGNORE : [])), `${VERIFY_DIR}/**`],
+      platform,
+      files: lane.files ?? (kind === "frontend" ? (rn ? RN_FILES : FRONTEND_FILES) : []),
+      ignore: [...(lane.ignore ?? (kind === "frontend" ? [...FRONTEND_IGNORE, ...(rn ? ["**/.maestro/**", "**/node_modules/**"] : [])] : [])), `${VERIFY_DIR}/**`],
+      native: lane.native ?? (rn ? RN_NATIVE : []),
       checks: lane.checks ?? [],
     };
   });
@@ -235,6 +242,9 @@ export const DEFAULT_GUARD = [
   "**/conftest.py",
   "**/.golangci.y*ml",
   "**/scripts/ui/check-raw-styles.mjs",
+  "**/scripts/ui/rn-look.mjs",
+  "**/scripts/ui/lib/png.mjs",
+  "**/e2e/rn-look/screens.json",
   "**/e2e/ui-look/**/*.{ts,js,json}",
 ];
 

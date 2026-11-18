@@ -1,9 +1,9 @@
 ---
 name: frontend
-description: Use when building, restyling or reviewing any user-facing screen, page, storefront, dashboard or component; when starting a project's design system or tokens; when a user says the UI looks generic, ugly, unprofessional or inconsistent, or asks for one page or module to look different from the rest.
+description: Use when building, restyling or reviewing any user-facing screen, page, storefront, dashboard or component, on the web or in a React Native / Expo app; when starting a project's design system or tokens; when a user says the UI looks generic, ugly, unprofessional or inconsistent, or asks for one page or module to look different from the rest.
 ---
 
-# Building consistent UI
+# Frontend: consistent UI, on the web and on phones
 
 ## Overview
 
@@ -18,6 +18,7 @@ Third-party design skills are tools this workflow calls; they never override the
 | Project state | Read |
 | --- | --- |
 | No `docs/design.md` | `setup.md`, then come back |
+| The app is React Native or Expo (a lane with `"platform": "react-native"`) | `mobile.md` alongside every file below |
 | Any change | `<plugin>/shared/acceptance.md` first: write `.verify/acceptance.md` |
 | Request: one page/module should look different from `docs/design.md` | "Style change requests" below |
 | Building or changing a screen | `build.md`, then `verify.md` |

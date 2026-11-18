@@ -25,6 +25,7 @@ import {
   acceptanceLines,
   changedSince,
   contractPaths,
+  gitLines,
   guardChanges,
   inLane,
   loadConfig,
@@ -97,6 +98,16 @@ const contractChanges = touched.filter((f) => lanes.some((l) => isUnder(f, contr
 const baselineChanges = touched.filter((f) => /-snapshots\/.+\.png$/.test(f));
 const sharedChanges = touched.filter((f) => lanes.some((l) => isUnder(f, l.shared ?? [])));
 const sensitiveChanges = touched.filter((f) => lanes.some((l) => isUnder(f, l.sensitive ?? [])));
+// Native changes of a React Native / Expo app ship only in a new store build: native config and
+// folders (lane "native"), and a package.json that gains a native module.
+const nativeChanges = touched.filter((f) => lanes.some((l) => isUnder(f, l.native ?? [])));
+if (lanes.some((l) => l.platform === "react-native")) {
+  for (const f of touched.filter((t) => /(^|\/)package\.json$/.test(t) && !nativeChanges.includes(t))) {
+    const added = gitLines(root, ["diff", "--unified=0", cfg.base ?? "HEAD", "--", f]).filter((l) => /^\+\s*"(?:react-native-|@react-native|expo-|@expo\/)[^"]*"\s*:/.test(l));
+    const untracked = !added.length && !gitLines(root, ["ls-files", "--", f]).length && /"(?:react-native-|@react-native|expo-|@expo\/)[^"]*"\s*:/.test(readFileSync(join(root, f), "utf8"));
+    if (added.length || untracked) nativeChanges.push(`${f} (native dependency: ${added.map((l) => l.match(/"([^"]+)"/)[1]).join(", ") || "new file"})`);
+  }
+}
 const negativeSkips = lanes.flatMap((l) => (last.lanes[l.name]?.checks ?? []).filter((c) => /no test changed/.test(c.note ?? "")).map((c) => `${l.name}/${c.name}`));
 const notChecked = criteria.filter((c) => c.status === "not checked").map((c) => c.id);
 
@@ -118,6 +129,7 @@ const why2 = [
 const why3 = [
   contractChanges.length && "a contract changed (design, API, data or migrations)",
   sensitiveChanges.length && `a sensitive path changed (${sensitiveChanges.join(", ")})`,
+  nativeChanges.length && `a native change needs a new store build (${nativeChanges.join(", ")})`,
   guard3.length && `the checks themselves changed (${[...new Set(guard3.map((g) => `${g.path}: ${g.why}`))].join("; ")})`,
 ].filter(Boolean);
 const notReady = [
@@ -145,11 +157,14 @@ const field = (name) => {
 };
 const door = migrationChanges.length
   ? `one-way: a migration changes stored data (${migrationChanges.join(", ")})`
+  : nativeChanges.length
+    ? "one-way: a native change ships only in a new store build, and users keep the old build until they update; JavaScript sent over the air must keep working with both"
   : apiContractChanges.length
     ? `one-way for callers already using the new contract (${apiContractChanges.join(", ")})`
     : field("Door") ?? "two-way: reverting the commit restores the previous behaviour";
 const reach = [
   sensitiveChanges.length && `sensitive paths (${sensitiveChanges.length})`,
+  nativeChanges.length && `native code or config (${nativeChanges.length})`,
   contractChanges.length && `contracts (${contractChanges.length})`,
   sharedChanges.length && `shared parts (${sharedChanges.length})`,
   guarded.length && `the checks (${guarded.length})`,

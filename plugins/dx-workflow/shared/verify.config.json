@@ -15,6 +15,24 @@
         { "name": "inspect", "run": "node <tasteInspect path> <url> --out \"$VERIFY_RUN_DIR/inspect\" <--app for app screens>" }
       ]
     },
+    "app": {
+      "kind": "frontend",
+      "platform": "react-native",
+      "files": ["<app dir>/**/*.{ts,tsx,js,jsx}", "<app dir>/app.json", "<app dir>/app.config.{js,ts}", "<app dir>/eas.json", "<app dir>/ios/**", "<app dir>/android/**", "<app dir>/assets/**"],
+      "native": ["<app dir>/app.json", "<app dir>/app.config.{js,ts}", "<app dir>/eas.json", "<app dir>/ios/**", "<app dir>/android/**"],
+      "tokens": ["<theme file, e.g. src/theme.ts>"],
+      "shared": ["<shared component folders, e.g. src/components/ui>"],
+      "sensitive": ["<sign-in, payments, anything that deletes data>"],
+      "checks": [
+        { "name": "raw-styles", "run": "node scripts/ui/check-raw-styles.mjs <app source dirs> --platform react-native --spacing-scale <0,4,8,12,16,24,32>" },
+        { "name": "types", "run": "npx tsc --noEmit", "cwd": "<app dir>" },
+        { "name": "lint", "run": "npx expo lint", "cwd": "<app dir>" },
+        { "name": "unit", "run": "npx jest --ci", "cwd": "<app dir>" },
+        { "name": "negative", "negative": { "test": "npx jest --ci" } },
+        { "name": "functional", "run": "maestro test -e VERIFY_RUN_DIR=\"$VERIFY_RUN_DIR\" .maestro/journeys", "cwd": "<app dir>", "timeoutMin": 30, "ci": false },
+        { "name": "look", "run": "node scripts/ui/rn-look.mjs --config e2e/rn-look/screens.json", "cwd": "<app dir>", "timeoutMin": 45, "ci": false }
+      ]
+    },
     "backend": {
       "files": ["<api dir>/**", "<migrations dir>/**", "<contract file, e.g. openapi.yaml>"],
       "contract": ["<contract file, e.g. openapi.yaml>"],

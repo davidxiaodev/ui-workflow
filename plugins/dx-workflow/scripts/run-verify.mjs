@@ -102,7 +102,12 @@ for (const lane of lanes) {
   const laneStarted = new Date().toISOString();
   const results = [];
   for (const check of checks) {
-    if (!args.includes("--keep-going") && results.some((r) => r.exitCode !== 0)) {
+    if (process.env.CI && check.ci === false) {
+      console.log(`run-verify: ${lane.name}/${check.name} … skipped in CI ("ci": false; it needs a simulator, a device or a local service)`);
+      results.push({ name: check.name, run: check.run ?? "built-in negative check", exitCode: null, skipped: true, seconds: 0, log: null, note: 'not run in CI ("ci": false)' });
+      continue;
+    }
+    if (!args.includes("--keep-going") && results.some((r) => r.exitCode !== 0 && !r.skipped)) {
       console.log(`run-verify: ${lane.name}/${check.name} … skipped (an earlier check failed; --keep-going runs it)`);
       results.push({ name: check.name, run: check.run ?? "built-in negative check", exitCode: null, skipped: true, seconds: 0, log: null, note: "skipped after an earlier failure" });
       continue;

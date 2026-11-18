@@ -1,5 +1,8 @@
 # Setup: a design contract for this project
 
+For a React Native or Expo app, follow `mobile.md` "Setup" for the lane, raw styles, screenshots and
+journeys; the design contract steps below apply as they are.
+
 Do this once per project. The output is `docs/design.md`, one token file, and the checks. The user
 makes the taste decisions; you prepare them and write them down.
 

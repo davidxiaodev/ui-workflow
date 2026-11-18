@@ -63,9 +63,11 @@ const guarded = guardChanges(cfg, changedSince(root, cfg.base));
 const contract = changes.filter((c) => matchAny(contractPaths(lane), c.path)).map((c) => c.path);
 const sensitive = changes.filter((c) => matchAny(lane.sensitive ?? [], c.path)).map((c) => c.path);
 const shared = changes.filter((c) => matchAny(lane.shared ?? [], c.path)).map((c) => c.path);
+const native = changes.filter((c) => matchAny(lane.native ?? [], c.path)).map((c) => c.path);
 const reasons3 = [
   contract.length && `contract: ${contract.join(", ")}`,
   sensitive.length && `sensitive: ${sensitive.join(", ")}`,
+  native.length && `native (needs a store build): ${native.join(", ")}`,
   guarded.some((g) => g.tier === 3) && `checks changed: ${guarded.filter((g) => g.tier === 3).map((g) => g.path).join(", ")}`,
 ].filter(Boolean);
 const depth = reasons3.length || size > 400 ? "deep" : size <= 30 && !shared.length ? "quick" : "standard";

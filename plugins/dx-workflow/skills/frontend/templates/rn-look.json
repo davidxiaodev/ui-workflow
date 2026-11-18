@@ -1,0 +1,22 @@
+{
+  "appId": "<bundle id / application id, e.g. com.example.app>",
+  "baselines": "e2e/rn-look/look-snapshots",
+  "install": {
+    "ios": "<optional: a command that installs the current development build on the booted simulator>",
+    "android": "<optional: the same for the running emulator>"
+  },
+  "devices": [
+    { "platform": "ios", "name": "iPhone SE (3rd generation)", "width": 375 },
+    { "platform": "ios", "name": "iPhone 16 Pro Max", "width": 440 },
+    { "platform": "android", "serial": "emulator-5554", "width": 412 }
+  ],
+  "variants": ["default", "dark", "large-text"],
+  "threshold": 16,
+  "maxDiffRatio": 0.001,
+  "timeoutMs": 20000,
+  "screens": [
+    { "name": "home", "group": "tabs", "link": "<scheme>://home", "waitFor": "<text or testID visible when the screen is ready>" },
+    { "name": "home-empty", "group": "tabs", "link": "<scheme>://home?fixture=empty", "waitFor": "<…>" },
+    { "name": "settings", "group": "tabs", "link": "<scheme>://settings", "waitFor": "<…>", "mask": [[0.6, 0.1, 0.4, 0.05]] }
+  ]
+}
